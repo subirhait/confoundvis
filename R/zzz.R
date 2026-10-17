@@ -6,7 +6,7 @@
 #' estimate as a function of hypothetical confounder strength) regardless of
 #' the framework that produced it, so the same displays and reports work for
 #' impact threshold (ITCV) analysis, partial R-squared omitted-variable bias
-#' analysis, and E-values.
+#' analysis, E-values, and Rosenbaum bounds for matched pairs.
 #'
 #' @details
 #' Main entry points:
@@ -15,10 +15,13 @@
 #'   \item Paths from other packages: [from_sensemakr()], [from_konfound()],
 #'     [from_evalue()], or [as_confoundsens()] for data frames of
 #'     precomputed (including stratified or multilevel) paths.
+#'   \item Paths for matched pairs (Rosenbaum's sensitivity model):
+#'     [sens_path_pairs()].
 #'   \item Covariate benchmarks: [covariate_impacts()].
 #'   \item Plots: [plot_robustness_curve()], [plot_sensitivity_love()],
 #'     [plot_sensitivity_contour()], [plot_local_taylor()].
-#'   \item Reporting: [robustness_points()], [sens_report()].
+#'   \item Reporting: [robustness_points()], [sens_report()], and
+#'     [sens_table()] for several paths side by side.
 #'   \item Conceptual illustrations built on stylized models:
 #'     [plot_reversal_cone()], [plot_taylor_panels()].
 #' }

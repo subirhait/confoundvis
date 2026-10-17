@@ -124,3 +124,15 @@ test_that("weighted lm is supported", {
   expect_equal(sens_path_lm(fw, "am", lambda = c(0, 0.1))$theta[2],
                unname(ref), tolerance = 1e-8)
 })
+
+test_that("unconditional ITCV uses weighted R2 for weighted fits", {
+  set.seed(2)
+  n <- 200
+  x1 <- rnorm(n); x2 <- rnorm(n); D <- 0.5 * x1 + rnorm(n)
+  y <- D + x1 + x2 + rnorm(n); w <- runif(n, 0.2, 3)
+  it <- itcv_lm(lm(y ~ D + x1 + x2, weights = w), "D")
+  expect_equal(it$r2yz, summary(lm(y ~ x1 + x2, weights = w))$r.squared,
+               tolerance = 1e-10)
+  expect_equal(it$r2xz, summary(lm(D ~ x1 + x2, weights = w))$r.squared,
+               tolerance = 1e-10)
+})

@@ -54,7 +54,10 @@ robustness_points <- function(x, alpha = 0.05) {
     i  <- i[o]
     la <- x$lambda[i]
     th <- x$theta[i]
-    s0 <- sign(th[1L] - null)
+    # Direction of the original conclusion: from the stored threshold when
+    # there is one (ITCV, Rosenbaum), otherwise from the starting value.
+    s0 <- if (!is.null(meta$threshold) && meta$threshold != null)
+      sign(meta$threshold - null) else sign(th[1L] - null)
     if (s0 == 0) s0 <- 1
     lam_null <- .first_crossing(la, s0 * (th - null))
 
@@ -129,12 +132,36 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
   } else if (fw == "evalue" && !is.null(meta$evalue)) {
     txt <- c(txt, sprintf("Risk ratio %s; E-value (point) = %s.",
                           fmt(meta$estimate), fmt(meta$evalue)))
+  } else if (fw == "rosenbaum" && !is.null(meta$statistic)) {
+    txt <- c(txt, sprintf(
+      "Matched pairs: %s (%s with nonzero difference); %s = %s; sensitivity value %s (one-sided alpha = %s).",
+      meta$n_pairs, meta$n_nonzero, meta$statistic_label,
+      format(signif(meta$statistic, 6)),
+      if (is.na(meta$sens_value)) "not reached (not significant at Gamma = 1)"
+      else if (!is.finite(meta$sens_value)) "Gamma > 1e6"
+      else paste("Gamma =", fmt(meta$sens_value)), meta$alpha))
   }
   txt <- c(txt, sprintf("Confounder strength (lambda): %s.", lam_lab))
 
   for (k in seq_len(nrow(pts))) {
     p  <- pts[k, ]
     pre <- if (nrow(pts) > 1L) sprintf("[%s] ", p$level) else ""
+    if (fw == "rosenbaum") {
+      a1 <- if (is.null(meta$alpha)) alpha else meta$alpha
+      r1 <- if (is.na(p$lambda_sig))
+        sprintf("The upper-bound P-value stays below %s for Gamma <= %s", a1, fmt(max_l))
+      else if (p$lambda_sig <= min(x$lambda))
+        sprintf("The test is not significant (one-sided alpha = %s) even at Gamma = %s",
+                a1, fmt(min(x$lambda)))
+      else sprintf("The upper-bound P-value reaches %s at Gamma = %s", a1, fmt(p$lambda_sig))
+      r2 <- if (is.na(p$lambda_null))
+        sprintf("it stays below 0.5 for Gamma <= %s", fmt(max_l))
+      else if (p$lambda_null <= min(x$lambda))
+        sprintf("it is already at least 0.5 at Gamma = %s", fmt(min(x$lambda)))
+      else sprintf("it reaches 0.5 at Gamma = %s", fmt(p$lambda_null))
+      txt <- c(txt, sprintf("%s%s; %s.", pre, r1, r2))
+      next
+    }
     s1 <- if (is.na(p$lambda_null))
       sprintf("the point estimate does not reach the null for lambda <= %s", fmt(max_l))
     else sprintf("the point estimate reaches the null at lambda = %s", fmt(p$lambda_null))
@@ -158,11 +185,14 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
     txt <- c(txt, sprintf("%sStarting at %s, %s; %s.", pre,
                           fmt(p$theta_start), s1, s2))
   }
+  bench <- if (fw %in% c("partial_r2", "itcv"))
+    "substantive knowledge and observed benchmarks (see covariate_impacts())."
+  else "substantive knowledge and, where available, observed benchmarks."
   txt <- c(txt, paste(
     "These values describe how strong an omitted confounder would need to be.",
     "They do not show whether such a confounder exists, and they rest on the",
     "framework's own modelling assumptions. Judge plausibility against",
-    "substantive knowledge and observed benchmarks (see covariate_impacts())."))
+    bench))
 
   structure(list(text = txt, points = pts), class = "confoundvis_report")
 }

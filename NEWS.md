@@ -1,3 +1,53 @@
+# confoundvis 0.3.0
+
+## New features
+
+* `sens_path_pairs()` computes a sensitivity path for matched-pair studies
+  under Rosenbaum's sensitivity model. For each value of Gamma it stores
+  the deviate equivalent to the upper bound on the one-sided P-value, so
+  `robustness_points()`, `plot_robustness_curve()`, `sens_report()`, and
+  `sens_table()` apply unchanged. Two statistics are available: Wilcoxon's
+  signed rank statistic (`method = "wilcoxon"`, agreeing with
+  `DOS2::senWilcox()`) and the exact bound for McNemar's statistic for
+  binary outcomes (`method = "binary"`, agreeing with
+  `sensitivity2x2xk::mh()`). The sensitivity value is also found by root
+  finding and stored in `meta$sens_value`.
+* `sens_table()` collects several `confoundsens` objects into one table:
+  framework, meaning of the sensitivity parameter, the framework's own
+  summary statistic, null and significance crossings, and the rule used.
+  Rows keep their own scales; the printed table says so.
+* `plot_sensitivity_contour()` gains an `itcv` argument. Given the output of
+  `itcv_lm()`, it draws, in closed form, the exact boundaries at which the
+  magnitude of the confounder-adjusted partial correlation equals the
+  critical value: in the original direction (solid) and in the reversed
+  direction (dotted). It shades the region where the estimate is no longer
+  significant, the region where it becomes significant with the opposite
+  sign, and correlation pairs that cannot occur (non-positive-definite
+  correlation matrix). The product curve is kept as a dashed reference.
+  `threshold` may now be omitted when `itcv` is supplied, and a new
+  `limits` argument sets the axis range.
+
+## Bug fixes
+
+* `itcv_lm()`: for weighted fits, the R-squared values used for the
+  unconditional ITCV were computed around an unweighted mean. They now
+  equal the weighted R-squared reported by `summary.lm()`. Unweighted fits
+  are unaffected.
+* `sens_report()` no longer points to `covariate_impacts()` for frameworks
+  that it does not benchmark (E-values, Rosenbaum bounds).
+* `robustness_points()` now takes the direction of the original conclusion
+  from the stored threshold when there is one. Paths that start on the
+  wrong side of their threshold are therefore reported as not significant
+  at the first grid value instead of returning `NA`. Results for paths
+  produced by earlier versions are unchanged.
+
+## Other changes
+
+* **DOS2** and **sensitivity2x2xk** are suggested for the cross-checks in
+  the test suite.
+* The workflow vignette adds the exact contour, a matched-pair example, and
+  `sens_table()`.
+
 # confoundvis 0.2.0
 
 ## Bug fixes

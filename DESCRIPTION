@@ -2,7 +2,7 @@ Package: confoundvis
 Type: Package
 Title: Visualization Tools for Sensitivity Analysis of Unmeasured
         Confounding
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     person(
       given = "Subir",
@@ -30,7 +30,7 @@ Language: en-US
 Depends: R (>= 4.1.0)
 Imports: ggplot2 (>= 3.4.0), rlang, graphics, grid, stats
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, gridExtra, sensemakr,
-        konfound, EValue
+        konfound, EValue, DOS2, sensitivity2x2xk
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/subirhait/confoundvis

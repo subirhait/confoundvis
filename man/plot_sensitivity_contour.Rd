@@ -4,27 +4,67 @@
 \alias{plot_sensitivity_contour}
 \title{Sensitivity contour plot}
 \usage{
-plot_sensitivity_contour(threshold, grid_n = 200, benchmarks = NULL)
+plot_sensitivity_contour(
+  threshold = NULL,
+  grid_n = 200,
+  benchmarks = NULL,
+  itcv = NULL,
+  limits = c(-1, 1)
+)
 }
 \arguments{
-\item{threshold}{Positive numeric scalar; the ITCV-style product threshold.
-The boundary satisfies \eqn{|r_{YU} \cdot r_{DU}| = } `threshold`.}
+\item{threshold}{Positive numeric scalar; the product threshold. The
+product reference satisfies \eqn{|r_{YU} \cdot r_{DU}| = }`threshold`.
+May be omitted when `itcv` is supplied, in which case the conditional
+ITCV is used.}
 
-\item{grid_n}{Integer >= 50; number of points used per branch of the
-boundary curve. Larger values give smoother curves.}
+\item{grid_n}{Integer >= 50; resolution of the curves (points per branch
+for the product reference; grid points per axis for the exact boundary
+and shading).}
 
 \item{benchmarks}{Optional data.frame with columns `r_yu` and `r_du`
 (numeric) and an optional `label` column (character). Each row is plotted
-as a labelled benchmark point.}
+as a labelled benchmark point. The output of [covariate_impacts()] with
+`metric = "itcv"` can be passed directly.}
+
+\item{itcv}{Optional output of [itcv_lm()] (a list with `r` and `r_crit`),
+or a list or named numeric vector with elements `r` and `r_crit`. When
+supplied, the exact boundary and the infeasible region are drawn.}
+
+\item{limits}{Numeric vector of length two; the displayed range of both
+axes. Narrow it (for example `c(-0.3, 0.3)`) when benchmarks lie close to
+the origin.}
 }
 \value{
 A [ggplot2::ggplot()] object.
 }
 \description{
-Draws an ITCV-style hyperbolic boundary in \eqn{(r_{YU}, r_{DU})} space
-and optionally overlays observed covariate benchmarks as labelled points.
-The robust region is the interior of the hyperbola where
-\eqn{|r_{YU} \cdot r_{DU}| < } `threshold`.
+Draws sensitivity boundaries in the plane of the two confounder
+correlations \eqn{(r_{YU}, r_{DU})} and optionally overlays observed
+covariate benchmarks as labelled points.
+}
+\details{
+Two kinds of boundary are available.
+
+* **Product reference** (always drawn, dashed when an exact boundary is
+  also drawn): the four branches of \eqn{|r_{YU} r_{DU}| = }`threshold`.
+  With `threshold` equal to the ITCV, this is the impact threshold of
+  Frank (2000). It is exact for confounders whose two correlations have
+  equal magnitude, but for unequal correlations the product alone does not
+  determine whether significance is lost.
+* **Exact boundary** (when `itcv` is supplied): the set of pairs at which
+  the confounder-adjusted partial correlation
+  \deqn{r_{\mathrm{adj}} = \frac{r - r_{DU} r_{YU}}
+        {\sqrt{(1 - r_{DU}^2)(1 - r_{YU}^2)}}}{r_adj = (r - r_DU r_YU) / sqrt((1 - r_DU^2)(1 - r_YU^2))}
+  has magnitude equal to the critical correlation. The solid curve is the
+  boundary in the direction of the original estimate; beyond it the
+  estimate is no longer significant ("Not significant" shading). The
+  dotted curve is the boundary in the reversed direction; beyond it the
+  adjusted estimate is significant with the opposite sign. Both curves are
+  computed in closed form. Pairs for which
+  the correlation matrix of \eqn{(D, Y, U)} given the covariates would not
+  be positive definite, \eqn{1 - r^2 - r_{DU}^2 - r_{YU}^2 + 2 r r_{DU} r_{YU} \le 0}{1 - r^2 - r_DU^2 - r_YU^2 + 2 r r_DU r_YU <= 0},
+  cannot occur and are shaded as infeasible.
 }
 \examples{
 b <- data.frame(
@@ -33,4 +73,13 @@ b <- data.frame(
   label = c("SES", "BMI")
 )
 plot_sensitivity_contour(threshold = 0.02, benchmarks = b)
+
+# Exact boundary and infeasible region from a fitted model
+fit <- lm(mpg ~ am + wt + hp, data = mtcars)
+plot_sensitivity_contour(itcv = itcv_lm(fit, "wt"))
+}
+\references{
+Frank, K. A. (2000). Impact of a confounding variable on a
+  regression coefficient. *Sociological Methods & Research*, 29(2),
+  147--194. \doi{10.1177/0049124100029002001}
 }

@@ -11,6 +11,7 @@ vignette: >
 has_sm <- requireNamespace("sensemakr", quietly = TRUE)
 has_kf <- requireNamespace("konfound", quietly = TRUE)
 has_ev <- requireNamespace("EValue", quietly = TRUE)
+has_dos2 <- requireNamespace("DOS2", quietly = TRUE)
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
                       fig.width = 6.5, fig.height = 4, eval = has_sm)
 ```
@@ -121,11 +122,17 @@ imp_it <- covariate_impacts(fit, "directlyharmed", metric = "itcv")
 plot_sensitivity_love(imp_it)
 ```
 
-The same object supplies benchmarks for the ITCV contour:
+The same object supplies benchmarks for the contour plot. Passing the
+`itcv_lm()` result draws the exact significance boundary (solid) next to the
+product reference $|r_{YU} r_{DU}| = \text{ITCV}$ (dashed). The two agree only
+for confounders whose two correlations have equal magnitude; elsewhere the
+exact boundary decides. Pairs that no correlation matrix can produce are
+shaded as infeasible.
 
-```{r contour}
-plot_sensitivity_contour(attr(imp_it, "threshold"),
-                         benchmarks = imp_it[!is.na(imp_it$r_yu), ])
+```{r contour, fig.width = 6, fig.height = 6.3}
+plot_sensitivity_contour(itcv = it,
+                         benchmarks = imp_it[!is.na(imp_it$r_yu), ],
+                         limits = c(-0.5, 0.5))
 ```
 
 ## Step 4: a plain-language report
@@ -169,6 +176,39 @@ p_ev <- from_evalue(e, lambda = seq(1, 4, by = 0.01))
 plot_robustness_curve(p_ev, points = FALSE)
 ```
 
+## Matched designs: Rosenbaum bounds
+
+For a matched-pair study, `sens_path_pairs()` computes the path under
+Rosenbaum's sensitivity model, in which two matched units may differ in
+their odds of treatment by at most a factor $\Gamma$. The path stores, for
+each $\Gamma$, the deviate equivalent to the upper bound on the one-sided
+P-value, so the same crossing, plotting, and reporting functions apply. The
+`werfel` data in **DOS2** compare DNA damage in 39 welders and 39 controls
+matched for age and smoking.
+
+```{r pairs, eval = has_dos2}
+data("werfel", package = "DOS2")
+d <- werfel$serpc_p - werfel$cerpc_p
+p_gam <- sens_path_pairs(d, gamma = seq(1, 6, by = 0.01))
+robustness_points(p_gam)
+sens_report(p_gam)
+plot_robustness_curve(p_gam, points = FALSE)
+```
+
+The result agrees with `DOS2::senWilcox()`. For a binary outcome, use
+`method = "binary"`, which applies the exact bound for McNemar's statistic.
+
+## Several analyses in one table
+
+`sens_table()` collects the decision information of several paths, each in
+its own units. It is intended for reporting several analyses side by side,
+not for ranking them: a robustness value, an impact threshold, and a value of
+$\Gamma$ measure different things.
+
+```{r table}
+sens_table(partial_r2 = p_r2, itcv = it$path, sensemakr = p_sm)
+```
+
 ## What this package does and does not do
 
 `confoundvis` is a presentation layer. Its computations reproduce the
@@ -206,6 +246,8 @@ Analysis*, 35(4), 437–460.
 Hazlett, C. (2020). Angry or weary? How violence impacts attitudes toward
 peace among Darfurian refugees. *Journal of Conflict Resolution*, 64(5),
 844–870.
+
+Rosenbaum, P. R. (2002). *Observational Studies* (2nd ed.). Springer.
 
 VanderWeele, T. J., & Ding, P. (2017). Sensitivity analysis in observational
 research: Introducing the E-value. *Annals of Internal Medicine*, 167(4),

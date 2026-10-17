@@ -223,7 +223,10 @@ itcv_lm <- function(model, treatment, alpha = 0.05,
   D  <- pr$X[, jD]
   W  <- pr$X[, -jD, drop = FALSE]
   has_int <- any(pr$assign == 0L)
-  tss <- function(v) if (has_int) sum((v - mean(v))^2) else sum(v^2)
+  # Total sum of squares about the (weighted) mean: regress on the intercept
+  # column, which is sqrt(w) for weighted fits and 1 otherwise.
+  int_col <- pr$X[, pr$assign == 0L, drop = FALSE]
+  tss <- function(v) if (has_int) .rss(v, int_col) else sum(v^2)
   r2xz <- if (ncol(W) > (if (has_int) 1L else 0L)) 1 - .rss(D, W) / tss(D) else 0
   r2yz <- if (ncol(W) > (if (has_int) 1L else 0L)) 1 - .rss(pr$y, W) / tss(pr$y) else 0
   out$r2xz <- r2xz
