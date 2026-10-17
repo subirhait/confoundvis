@@ -35,7 +35,8 @@
 #'   and shading).
 #' @param benchmarks Optional data.frame with columns `r_yu` and `r_du`
 #'   (numeric) and an optional `label` column (character). Each row is plotted
-#'   as a labelled benchmark point. The output of [covariate_impacts()] with
+#'   as a labelled benchmark point; labels repel one another when the
+#'   \pkg{ggrepel} package is installed. The output of [covariate_impacts()] with
 #'   `metric = "itcv"` can be passed directly.
 #' @param itcv Optional output of [itcv_lm()] (a list with `r` and `r_crit`),
 #'   or a list or named numeric vector with elements `r` and `r_crit`. When
@@ -182,13 +183,24 @@ plot_sensitivity_contour <- function(threshold  = NULL,
     )
 
     if ("label" %in% names(benchmarks)) {
-      p <- p + ggplot2::geom_text(
-        data = benchmarks,
-        ggplot2::aes(x = .data$r_yu, y = .data$r_du, label = .data$label),
-        inherit.aes = FALSE,
-        nudge_y = 0.04,
-        size = 3.5
-      )
+      if (requireNamespace("ggrepel", quietly = TRUE)) {
+        p <- p + ggrepel::geom_text_repel(
+          data = benchmarks,
+          ggplot2::aes(x = .data$r_yu, y = .data$r_du, label = .data$label),
+          inherit.aes = FALSE,
+          size = 3.5,
+          min.segment.length = 0,
+          seed = 1
+        )
+      } else {
+        p <- p + ggplot2::geom_text(
+          data = benchmarks,
+          ggplot2::aes(x = .data$r_yu, y = .data$r_du, label = .data$label),
+          inherit.aes = FALSE,
+          nudge_y = 0.04,
+          size = 3.5
+        )
+      }
     }
   }
 

@@ -12,6 +12,14 @@
   binary outcomes (`method = "binary"`, agreeing with
   `sensitivity2x2xk::mh()`). The sensitivity value is also found by root
   finding and stored in `meta$sens_value`.
+* `rir_lm()` computes the robustness of inference to replacement (RIR;
+  Frank et al., 2013) from a fitted linear model: the threshold for
+  significance, the percent of the estimate that would have to be due to
+  bias, the number of cases that would have to be replaced with null-effect
+  cases, and the corresponding path (estimate after replacing a proportion
+  lambda of the cases). Results agree with `konfound::konfound(index =
+  "RIR")`. `from_konfound()` gains `index = "RIR"` to import konfound's RIR
+  output as a path.
 * `sens_table()` collects several `confoundsens` objects into one table:
   framework, meaning of the sensitivity parameter, the framework's own
   summary statistic, null and significance crossings, and the rule used.
@@ -26,6 +34,8 @@
   correlation matrix). The product curve is kept as a dashed reference.
   `threshold` may now be omitted when `itcv` is supplied, and a new
   `limits` argument sets the axis range.
+* Benchmark labels in `plot_sensitivity_contour()` repel one another when
+  **ggrepel** is installed (suggested), instead of overlapping.
 
 ## Bug fixes
 

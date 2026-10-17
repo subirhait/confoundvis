@@ -8,39 +8,53 @@ from_konfound(
   x,
   dof = NULL,
   lambda = seq(0, 0.5, by = 0.01),
-  treatment = NA_character_
+  treatment = NA_character_,
+  index = c("IT", "RIR")
 )
 }
 \arguments{
 \item{x}{A list returned by `konfound()`/`pkonfound()` with
-`to_return = "raw_output"`; must contain `obs_r` and `critical_r`.}
+`to_return = "raw_output"`.}
 
-\item{dof}{Optional residual degrees of freedom. If supplied, the path
-also carries adjusted t statistics.}
+\item{dof}{Optional residual degrees of freedom (ITCV only). If supplied,
+the path also carries adjusted t statistics.}
 
-\item{lambda}{Numeric vector of impacts in \[0, 1).}
+\item{lambda}{Numeric vector of impacts in \[0, 1) for `index = "IT"`, or
+of replacement proportions in \[0, 1\] for `index = "RIR"` (default
+`seq(0, 1, by = 0.001)` when not supplied).}
 
 \item{treatment}{Optional label for the treatment.}
+
+\item{index}{`"IT"` (default) or `"RIR"`.}
 }
 \value{
-A `confoundsens` object on the correlation scale; `meta$itcv`
-  holds the conditional ITCV implied by `obs_r` and `critical_r` (konfound's
-  `itcvGz`).
+A `confoundsens` object. For `index = "IT"` it is on the
+  correlation scale and `meta$itcv` holds the conditional ITCV (konfound's
+  `itcvGz`); for `index = "RIR"` it is on the scale of the estimate and
+  `meta$perc_bias` and `meta$rir` hold konfound's percent bias and RIR.
 }
 \description{
-Builds the ITCV sensitivity path from the observed and critical
-correlations reported by `konfound::konfound()` or `konfound::pkonfound()`
-when called with `to_return = "raw_output"`.
+Builds a path from the output of `konfound::konfound()` or
+`konfound::pkonfound()` called with `to_return = "raw_output"`.
+}
+\details{
+With `index = "IT"` (default), the impact threshold (ITCV) path is built
+from the observed and critical correlations (`obs_r`, `critical_r`). With
+`index = "RIR"`, the robustness-of-inference-to-replacement path is built
+from `beta_threshold` and `perc_bias_to_change`, and konfound's
+`RIR_primary` is carried in `meta$rir`; see [rir_lm()] for the path.
 }
 \examples{
-\dontshow{if (requireNamespace("konfound", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (requireNamespace("konfound", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 k <- konfound::pkonfound(est_eff = 2, std_err = 0.4, n_obs = 100,
                          n_covariates = 3, index = "IT",
                          to_return = "raw_output")
 path <- from_konfound(k)
 path$meta$itcv
+rir <- from_konfound(k, index = "RIR")
+rir$meta$rir
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-[itcv_lm()]
+[itcv_lm()], [rir_lm()]
 }

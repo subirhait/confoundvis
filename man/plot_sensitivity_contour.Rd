@@ -24,7 +24,8 @@ and shading).}
 
 \item{benchmarks}{Optional data.frame with columns `r_yu` and `r_du`
 (numeric) and an optional `label` column (character). Each row is plotted
-as a labelled benchmark point. The output of [covariate_impacts()] with
+as a labelled benchmark point; labels repel one another when the
+\pkg{ggrepel} package is installed. The output of [covariate_impacts()] with
 `metric = "itcv"` can be passed directly.}
 
 \item{itcv}{Optional output of [itcv_lm()] (a list with `r` and `r_crit`),

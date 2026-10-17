@@ -11,12 +11,14 @@ common `confoundsens` object stores a sensitivity path (the treatment
 estimate as a function of hypothetical confounder strength) regardless of
 the framework that produced it, so the same displays and reports work for
 impact threshold (ITCV) analysis, partial R-squared omitted-variable bias
-analysis, E-values, and Rosenbaum bounds for matched pairs.
+analysis, robustness of inference to replacement (RIR), E-values, and
+Rosenbaum bounds for matched pairs.
 }
 \details{
 Main entry points:
 \itemize{
-  \item Paths from fitted models: [sens_path_lm()], [itcv_lm()].
+  \item Paths from fitted models: [sens_path_lm()], [itcv_lm()],
+    [rir_lm()].
   \item Paths from other packages: [from_sensemakr()], [from_konfound()],
     [from_evalue()], or [as_confoundsens()] for data frames of
     precomputed (including stratified or multilevel) paths.

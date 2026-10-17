@@ -30,7 +30,7 @@ Language: en-US
 Depends: R (>= 4.1.0)
 Imports: ggplot2 (>= 3.4.0), rlang, graphics, grid, stats
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, gridExtra, sensemakr,
-        konfound, EValue, DOS2, sensitivity2x2xk
+        konfound, EValue, DOS2, sensitivity2x2xk, ggrepel
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/subirhait/confoundvis

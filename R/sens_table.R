@@ -10,6 +10,7 @@
     itcv       = list(name = "ITCV (conditional)",       value = meta$itcv),
     evalue     = list(name = "E-value (point)",          value = meta$evalue),
     rosenbaum  = list(name = "Sensitivity value (Gamma)", value = meta$sens_value),
+    rir        = list(name = "RIR (cases)",              value = meta$rir),
     list(name = NA_character_, value = NA_real_))
 }
 

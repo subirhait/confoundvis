@@ -132,6 +132,20 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
   } else if (fw == "evalue" && !is.null(meta$evalue)) {
     txt <- c(txt, sprintf("Risk ratio %s; E-value (point) = %s.",
                           fmt(meta$estimate), fmt(meta$evalue)))
+  } else if (fw == "rir" && !is.null(meta$beta_threshold)) {
+    txt <- c(txt, if (!is.na(meta$perc_bias)) sprintf(
+      "Estimate %s; threshold for significance %s. To invalidate the inference, %s%% of the estimate would have to be due to bias%s.",
+      fmt(meta$estimate), fmt(meta$beta_threshold),
+      formatC(meta$perc_bias, digits = 4, format = "g"),
+      if (!is.na(meta$rir)) {
+        if (!is.null(meta$n_obs) && !is.na(meta$n_obs))
+          sprintf(": replacing %s of %s cases with cases for which the effect is zero (RIR = %s)",
+                  meta$rir, meta$n_obs, meta$rir)
+        else sprintf(" (RIR = %s cases replaced with null-effect cases)", meta$rir)
+      } else "")
+    else sprintf(
+      "Estimate %s does not exceed the threshold for significance %s; see konfound for the replacement needed to sustain an inference.",
+      fmt(meta$estimate), fmt(meta$beta_threshold)))
   } else if (fw == "rosenbaum" && !is.null(meta$statistic)) {
     txt <- c(txt, sprintf(
       "Matched pairs: %s (%s with nonzero difference); %s = %s; sensitivity value %s (one-sided alpha = %s).",
@@ -141,7 +155,9 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
       else if (!is.finite(meta$sens_value)) "Gamma > 1e6"
       else paste("Gamma =", fmt(meta$sens_value)), meta$alpha))
   }
-  txt <- c(txt, sprintf("Confounder strength (lambda): %s.", lam_lab))
+  txt <- c(txt, sprintf("%s (lambda): %s.",
+                        if (fw == "rir") "Sensitivity parameter" else "Confounder strength",
+                        lam_lab))
 
   for (k in seq_len(nrow(pts))) {
     p  <- pts[k, ]
@@ -184,6 +200,13 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
     else sprintf("significance (alpha = %s) is lost at lambda = %s", alpha, fmt(p$lambda_sig))
     txt <- c(txt, sprintf("%sStarting at %s, %s; %s.", pre,
                           fmt(p$theta_start), s1, s2))
+  }
+  if (fw == "rir") {
+    txt <- c(txt, paste(
+      "RIR describes how many cases would have to be replaced with cases in",
+      "which the treatment has no effect. It does not show that such cases",
+      "exist; judge plausibility against knowledge of the sample and design."))
+    return(structure(list(text = txt, points = pts), class = "confoundvis_report"))
   }
   bench <- if (fw %in% c("partial_r2", "itcv"))
     "substantive knowledge and observed benchmarks (see covariate_impacts())."

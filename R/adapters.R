@@ -50,21 +50,30 @@ from_sensemakr <- function(x, lambda = seq(0, 0.5, by = 0.01), ratio = 1) {
 
 #' Convert konfound output to a confoundsens path
 #'
-#' Builds the ITCV sensitivity path from the observed and critical
-#' correlations reported by `konfound::konfound()` or `konfound::pkonfound()`
-#' when called with `to_return = "raw_output"`.
+#' Builds a path from the output of `konfound::konfound()` or
+#' `konfound::pkonfound()` called with `to_return = "raw_output"`.
+#'
+#' With `index = "IT"` (default), the impact threshold (ITCV) path is built
+#' from the observed and critical correlations (`obs_r`, `critical_r`). With
+#' `index = "RIR"`, the robustness-of-inference-to-replacement path is built
+#' from `beta_threshold` and `perc_bias_to_change`, and konfound's
+#' `RIR_primary` is carried in `meta$rir`; see [rir_lm()] for the path.
 #'
 #' @param x A list returned by `konfound()`/`pkonfound()` with
-#'   `to_return = "raw_output"`; must contain `obs_r` and `critical_r`.
-#' @param dof Optional residual degrees of freedom. If supplied, the path
-#'   also carries adjusted t statistics.
-#' @param lambda Numeric vector of impacts in \[0, 1).
+#'   `to_return = "raw_output"`.
+#' @param dof Optional residual degrees of freedom (ITCV only). If supplied,
+#'   the path also carries adjusted t statistics.
+#' @param lambda Numeric vector of impacts in \[0, 1) for `index = "IT"`, or
+#'   of replacement proportions in \[0, 1\] for `index = "RIR"` (default
+#'   `seq(0, 1, by = 0.001)` when not supplied).
 #' @param treatment Optional label for the treatment.
+#' @param index `"IT"` (default) or `"RIR"`.
 #'
-#' @return A `confoundsens` object on the correlation scale; `meta$itcv`
-#'   holds the conditional ITCV implied by `obs_r` and `critical_r` (konfound's
-#'   `itcvGz`).
-#' @seealso [itcv_lm()]
+#' @return A `confoundsens` object. For `index = "IT"` it is on the
+#'   correlation scale and `meta$itcv` holds the conditional ITCV (konfound's
+#'   `itcvGz`); for `index = "RIR"` it is on the scale of the estimate and
+#'   `meta$perc_bias` and `meta$rir` hold konfound's percent bias and RIR.
+#' @seealso [itcv_lm()], [rir_lm()]
 #' @export
 #'
 #' @examplesIf requireNamespace("konfound", quietly = TRUE)
@@ -73,8 +82,33 @@ from_sensemakr <- function(x, lambda = seq(0, 0.5, by = 0.01), ratio = 1) {
 #'                          to_return = "raw_output")
 #' path <- from_konfound(k)
 #' path$meta$itcv
+#' rir <- from_konfound(k, index = "RIR")
+#' rir$meta$rir
 from_konfound <- function(x, dof = NULL, lambda = seq(0, 0.5, by = 0.01),
-                          treatment = NA_character_) {
+                          treatment = NA_character_, index = c("IT", "RIR")) {
+  index <- match.arg(index)
+  if (index == "RIR") {
+    need <- c("beta_threshold", "perc_bias_to_change")
+    if (!is.list(x) || !all(need %in% names(x)) ||
+        is.null(x$beta_threshold) || is.null(x$perc_bias_to_change)) {
+      stop("`x` must be konfound raw output containing `beta_threshold` and ",
+           "`perc_bias_to_change` (call konfound()/pkonfound() with ",
+           "to_return = \"raw_output\").", call. = FALSE)
+    }
+    if (missing(lambda)) lambda <- seq(0, 1, by = 0.001)
+    .check_lambda_prop(lambda)
+    bt <- as.numeric(x$beta_threshold)
+    pb <- as.numeric(x$perc_bias_to_change)
+    if (!is.finite(pb) || pb <= 0 || pb >= 100) {
+      stop("konfound reports no RIR to invalidate the inference ",
+           "(perc_bias_to_change = ", pb, "); the estimate may not be significant.",
+           call. = FALSE)
+    }
+    est <- bt / (1 - pb / 100)
+    rir <- if (is.null(x$RIR_primary)) NA_real_ else as.numeric(x$RIR_primary)
+    return(.rir_core(est, bt, n_obs = NA_real_, lambda = lambda, alpha = NA_real_,
+                     source = "konfound", treatment = treatment, rir = rir))
+  }
   if (!is.list(x) || !all(c("obs_r", "critical_r") %in% names(x)) ||
       is.null(x$obs_r) || is.null(x$critical_r)) {
     stop("`x` must be konfound raw output containing `obs_r` and `critical_r` ",
