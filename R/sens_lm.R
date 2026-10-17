@@ -186,7 +186,14 @@ sens_path_lm <- function(model, treatment,
 #'   `confoundsens` object on the correlation scale), `r2xz` and `r2yz` (the
 #'   \eqn{R^2} of the covariates with treatment and outcome), and
 #'   `itcv_unconditional` (the ITCV expressed in unconditional correlations,
-#'   `itcv * sqrt((1 - r2xz) * (1 - r2yz))`).
+#'   `itcv * sqrt((1 - r2xz) * (1 - r2yz))`), `benchmark_corr_product` (the
+#'   impact of all covariates together, \eqn{R_{XZ} R_{YZ}}, the product of
+#'   the multiple correlations), and `itcv_ratio_to_benchmark`
+#'   (`itcv_unconditional / benchmark_corr_product`). The ratio follows
+#'   eq. (12) of Frank et al. (2025): values above 1 mean that an omitted
+#'   variable would need a larger impact than all observed covariates
+#'   together. Covariates such as pretests or fixed effects inflate the
+#'   benchmark.
 #'
 #' @details The conditional ITCV equals `itcvGz` and the unconditional ITCV
 #'   equals `itcv` in the raw output of `konfound::konfound()` (version 1.0).
@@ -199,7 +206,12 @@ sens_path_lm <- function(model, treatment,
 #'   What would it take to change an inference? Using Rubin's causal model to
 #'   interpret the robustness of causal inferences. *Educational Evaluation
 #'   and Policy Analysis*, 35(4), 437--460. \doi{10.3102/0162373713493129}
-#' @seealso [from_konfound()], [sens_path_lm()]
+#'
+#'   Frank, K. A., Saw, G. K., Lin, Q., Xu, R., Rosenberg, J. M., Maroulis,
+#'   S. J., & Staudt Willet, K. B. (2025). *A practical guide to impact
+#'   threshold of a confounding variable (ITCV) and robustness of inference
+#'   to replacement (RIR)* (Version 2). \doi{10.31234/osf.io/pdgbz_v2}
+#' @seealso [from_konfound()], [sens_path_lm()], [rir_lm()]
 #' @export
 #'
 #' @examples
@@ -233,6 +245,11 @@ itcv_lm <- function(model, treatment, alpha = 0.05,
   out$r2yz <- r2yz
   out$itcv_unconditional <- out$itcv * sqrt((1 - r2xz) * (1 - r2yz))
   out$path$meta$itcv_unconditional <- out$itcv_unconditional
+  # Benchmark for all covariates together (Frank et al., 2025, eq. 12):
+  # the product of the multiple correlations R_xZ * R_yZ.
+  out$benchmark_corr_product <- sqrt(r2xz * r2yz)
+  out$itcv_ratio_to_benchmark <- if (out$benchmark_corr_product > 0)
+    out$itcv_unconditional / out$benchmark_corr_product else NA_real_
   out
 }
 
@@ -311,9 +328,21 @@ itcv_lm <- function(model, treatment, alpha = 0.05,
 #' @param alpha Two-sided significance level used for the ITCV threshold.
 #'
 #' @return A data frame with one row per covariate term and columns
-#'   `covariate`, `term_df`, `r_du`, `r_yu`, `itcv_impact`, `r2dz.x`,
-#'   `r2yz.dx`, `bias_index`, `impact`, and `label`, and attributes
-#'   `threshold`, `metric`, `itcv`, and `f_threshold`.
+#'   `covariate`, `term_df`, `r_du`, `r_yu`, `itcv_impact`, `r_du_zero`,
+#'   `r_yu_zero`, `impact_zero`, `r2dz.x`, `r2yz.dx`, `bias_index`,
+#'   `itcv_ratio`, `impact`, and `label`, and attributes `threshold`,
+#'   `metric`, `itcv`, and `f_threshold`. `r_du_zero` and `r_yu_zero` are the
+#'   zero-order (unadjusted) correlations of a single-column term with
+#'   treatment and outcome, `impact_zero` their signed product, and
+#'   `itcv_ratio` the unconditional ITCV divided by `impact_zero` (Frank et
+#'   al., 2025, eq. 10), reported for terms whose impact acts against the
+#'   estimate. A ratio above 1 means an omitted variable would need a larger
+#'   impact than that covariate.
+#' @references
+#'   Frank, K. A., Saw, G. K., Lin, Q., Xu, R., Rosenberg, J. M., Maroulis,
+#'   S. J., & Staudt Willet, K. B. (2025). *A practical guide to impact
+#'   threshold of a confounding variable (ITCV) and robustness of inference
+#'   to replacement (RIR)* (Version 2). \doi{10.31234/osf.io/pdgbz_v2}
 #' @export
 #'
 #' @examples
@@ -339,6 +368,9 @@ covariate_impacts <- function(model, treatment,
     stop("The model has no covariate terms besides the treatment.", call. = FALSE)
   }
 
+  has_int <- any(pr$assign == 0L)
+  int_col <- pr$X[, pr$assign == 0L, drop = FALSE]
+  tss <- function(v) if (has_int) .rss(v, int_col) else sum(v^2)
   rss_d_full <- .rss(D, W)
   rss_y_full <- .rss(y, cbind(D, W))
   rss_yw_full <- .rss(y, W)
@@ -352,9 +384,14 @@ covariate_impacts <- function(model, treatment,
     if (length(cols) == 1L) {
       r_du <- sign(.coef_col(D, W, cols)) * sqrt(max(r2dz, 0))
       r_yu <- sign(.coef_col(y, W, cols)) * sqrt(max(r2yzw, 0))
+      # zero-order (unadjusted) correlations of the term with D and Y
+      zc <- cbind(int_col, W[, cols, drop = FALSE])
+      r_du0 <- sign(.coef_col(D, zc, ncol(zc))) *
+        sqrt(max(1 - .rss(D, zc) / tss(D), 0))
+      r_yu0 <- sign(.coef_col(y, zc, ncol(zc))) *
+        sqrt(max(1 - .rss(y, zc) / tss(y), 0))
     } else {
-      r_du <- NA_real_
-      r_yu <- NA_real_
+      r_du <- r_yu <- r_du0 <- r_yu0 <- NA_real_
     }
     data.frame(
       covariate  = pr$labels[k],
@@ -362,6 +399,9 @@ covariate_impacts <- function(model, treatment,
       r_du       = r_du,
       r_yu       = r_yu,
       itcv_impact = sign(pr$est) * r_du * r_yu,
+      r_du_zero  = r_du0,
+      r_yu_zero  = r_yu0,
+      impact_zero = sign(pr$est) * r_du0 * r_yu0,
       r2dz.x     = r2dz,
       r2yz.dx    = r2yz,
       bias_index = sqrt(r2yz * r2dz / (1 - r2dz)),
@@ -375,6 +415,12 @@ covariate_impacts <- function(model, treatment,
                      treatment = treatment, source = "lm")$itcv
   f_thr <- abs(pr$t) / sqrt(pr$dof)
 
+  # Ratio of the unconditional ITCV to each term's zero-order impact
+  # (Frank et al., 2025, eq. 10); defined for adverse (positive) impacts.
+  itcv_u <- itcv_lm(model, treatment, alpha = alpha,
+                    lambda = c(0, 0.5))$itcv_unconditional
+  out$itcv_ratio <- ifelse(!is.na(out$impact_zero) & out$impact_zero > 0,
+                           itcv_u / out$impact_zero, NA_real_)
   out$impact <- if (metric == "itcv") out$itcv_impact else out$bias_index
   out$label  <- out$covariate
   rownames(out) <- NULL

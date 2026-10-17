@@ -23,7 +23,14 @@ A list with elements `r` (observed partial correlation), `r_crit`
   `confoundsens` object on the correlation scale), `r2xz` and `r2yz` (the
   \eqn{R^2} of the covariates with treatment and outcome), and
   `itcv_unconditional` (the ITCV expressed in unconditional correlations,
-  `itcv * sqrt((1 - r2xz) * (1 - r2yz))`).
+  `itcv * sqrt((1 - r2xz) * (1 - r2yz))`), `benchmark_corr_product` (the
+  impact of all covariates together, \eqn{R_{XZ} R_{YZ}}, the product of
+  the multiple correlations), and `itcv_ratio_to_benchmark`
+  (`itcv_unconditional / benchmark_corr_product`). The ratio follows
+  eq. (12) of Frank et al. (2025): values above 1 mean that an omitted
+  variable would need a larger impact than all observed covariates
+  together. Covariates such as pretests or fixed effects inflate the
+  benchmark.
 }
 \description{
 Computes Frank's (2000) impact threshold for a confounding variable (ITCV)
@@ -55,7 +62,12 @@ Frank, K. A. (2000). Impact of a confounding variable on a
   What would it take to change an inference? Using Rubin's causal model to
   interpret the robustness of causal inferences. *Educational Evaluation
   and Policy Analysis*, 35(4), 437--460. \doi{10.3102/0162373713493129}
+
+  Frank, K. A., Saw, G. K., Lin, Q., Xu, R., Rosenberg, J. M., Maroulis,
+  S. J., & Staudt Willet, K. B. (2025). *A practical guide to impact
+  threshold of a confounding variable (ITCV) and robustness of inference
+  to replacement (RIR)* (Version 2). \doi{10.31234/osf.io/pdgbz_v2}
 }
 \seealso{
-[from_konfound()], [sens_path_lm()]
+[from_konfound()], [sens_path_lm()], [rir_lm()]
 }

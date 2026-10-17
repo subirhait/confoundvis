@@ -23,9 +23,16 @@ covariate_impacts(
 }
 \value{
 A data frame with one row per covariate term and columns
-  `covariate`, `term_df`, `r_du`, `r_yu`, `itcv_impact`, `r2dz.x`,
-  `r2yz.dx`, `bias_index`, `impact`, and `label`, and attributes
-  `threshold`, `metric`, `itcv`, and `f_threshold`.
+  `covariate`, `term_df`, `r_du`, `r_yu`, `itcv_impact`, `r_du_zero`,
+  `r_yu_zero`, `impact_zero`, `r2dz.x`, `r2yz.dx`, `bias_index`,
+  `itcv_ratio`, `impact`, and `label`, and attributes `threshold`,
+  `metric`, `itcv`, and `f_threshold`. `r_du_zero` and `r_yu_zero` are the
+  zero-order (unadjusted) correlations of a single-column term with
+  treatment and outcome, `impact_zero` their signed product, and
+  `itcv_ratio` the unconditional ITCV divided by `impact_zero` (Frank et
+  al., 2025, eq. 10), reported for terms whose impact acts against the
+  estimate. A ratio above 1 means an omitted variable would need a larger
+  impact than that covariate.
 }
 \description{
 For each covariate term in a fitted linear model (other than the treatment
@@ -66,4 +73,10 @@ fit <- lm(mpg ~ am + wt + hp + qsec, data = mtcars)
 imp <- covariate_impacts(fit, "am")
 imp
 plot_sensitivity_love(imp)
+}
+\references{
+Frank, K. A., Saw, G. K., Lin, Q., Xu, R., Rosenberg, J. M., Maroulis,
+  S. J., & Staudt Willet, K. B. (2025). *A practical guide to impact
+  threshold of a confounding variable (ITCV) and robustness of inference
+  to replacement (RIR)* (Version 2). \doi{10.31234/osf.io/pdgbz_v2}
 }

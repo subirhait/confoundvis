@@ -136,3 +136,19 @@ test_that("unconditional ITCV uses weighted R2 for weighted fits", {
   expect_equal(it$r2xz, summary(lm(D ~ x1 + x2, weights = w))$r.squared,
                tolerance = 1e-10)
 })
+
+test_that("ITCV benchmarks follow the practical guide (eqs. 10 and 12)", {
+  fit <- lm(mpg ~ am + wt + hp + qsec, data = mtcars)
+  it <- itcv_lm(fit, "wt")
+  expect_equal(it$benchmark_corr_product, sqrt(it$r2xz * it$r2yz))
+  expect_equal(it$itcv_ratio_to_benchmark,
+               it$itcv_unconditional / sqrt(it$r2xz * it$r2yz))
+  ci <- covariate_impacts(fit, "wt")
+  hp <- ci[ci$covariate == "hp", ]
+  expect_equal(hp$r_du_zero, cor(mtcars$hp, mtcars$wt), tolerance = 1e-10)
+  expect_equal(hp$r_yu_zero, cor(mtcars$hp, mtcars$mpg), tolerance = 1e-10)
+  expect_equal(hp$impact_zero, sign(coef(fit)[["wt"]]) * hp$r_du_zero * hp$r_yu_zero)
+  ok <- !is.na(ci$impact_zero) & ci$impact_zero > 0
+  expect_equal(ci$itcv_ratio[ok], it$itcv_unconditional / ci$impact_zero[ok])
+  expect_true(all(is.na(ci$itcv_ratio[!ok])))
+})

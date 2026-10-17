@@ -134,7 +134,7 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
                           fmt(meta$estimate), fmt(meta$evalue)))
   } else if (fw == "rir" && !is.null(meta$beta_threshold)) {
     txt <- c(txt, if (!is.na(meta$perc_bias)) sprintf(
-      "Estimate %s; threshold for significance %s. To invalidate the inference, %s%% of the estimate would have to be due to bias%s.",
+      "Estimate %s; threshold %s. To nullify the inference, %s%% of the estimate would have to be due to bias%s.",
       fmt(meta$estimate), fmt(meta$beta_threshold),
       formatC(meta$perc_bias, digits = 4, format = "g"),
       if (!is.na(meta$rir)) {
@@ -144,7 +144,7 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
         else sprintf(" (RIR = %s cases replaced with null-effect cases)", meta$rir)
       } else "")
     else sprintf(
-      "Estimate %s does not exceed the threshold for significance %s; see konfound for the replacement needed to sustain an inference.",
+      "Estimate %s does not exceed the threshold %s; see konfound for the replacement needed to sustain an inference.",
       fmt(meta$estimate), fmt(meta$beta_threshold)))
   } else if (fw == "rosenbaum" && !is.null(meta$statistic)) {
     txt <- c(txt, sprintf(
@@ -162,6 +162,16 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
   for (k in seq_len(nrow(pts))) {
     p  <- pts[k, ]
     pre <- if (nrow(pts) > 1L) sprintf("[%s] ", p$level) else ""
+    if (fw == "rir") {
+      q1 <- if (is.na(p$lambda_sig))
+        sprintf("the estimate stays above the threshold for lambda <= %s", fmt(max_l))
+      else if (p$lambda_sig <= min(x$lambda))
+        "the estimate does not exceed the threshold even before replacement"
+      else sprintf("the estimate falls to the threshold when a proportion %s of the cases is replaced",
+                   fmt(p$lambda_sig))
+      txt <- c(txt, sprintf("%sStarting at %s, %s.", pre, fmt(p$theta_start), q1))
+      next
+    }
     if (fw == "rosenbaum") {
       a1 <- if (is.null(meta$alpha)) alpha else meta$alpha
       r1 <- if (is.na(p$lambda_sig))

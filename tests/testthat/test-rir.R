@@ -38,3 +38,22 @@ test_that("rir_lm handles a non-significant estimate and bad input", {
   expect_error(rir_lm(fit, "wt", lambda = c(0, 1.5)), "\\[0, 1\\]")
   expect_error(from_konfound(list(a = 1), index = "RIR"), "beta_threshold")
 })
+
+test_that("the practical guide's RIR example is reproduced via konfound", {
+  skip_if_not_installed("konfound")
+  k <- suppressWarnings(suppressMessages(konfound::pkonfound(
+    0.1, 0.03, 6320, 5, index = "RIR", to_return = "raw_output")))
+  p <- from_konfound(k, index = "RIR")
+  expect_equal(p$meta$rir, 2603)
+  expect_equal(round(p$meta$perc_bias, 2), 41.19)
+  expect_true(any(grepl("nullify", sens_report(p)$text)))
+})
+
+test_that("rir_lm accepts a substantive effect threshold", {
+  fit <- lm(mpg ~ am + wt + hp, data = mtcars)
+  rr <- rir_lm(fit, "wt", threshold = 2)
+  est <- unname(coef(fit)["wt"])
+  expect_equal(rr$beta_threshold, -2)
+  expect_equal(rr$perc_bias, 100 * (1 - (-2) / est))
+  expect_error(rir_lm(fit, "wt", threshold = 0), "nonzero")
+})

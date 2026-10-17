@@ -4,7 +4,13 @@
 \alias{rir_lm}
 \title{Robustness of inference to replacement (RIR) from a linear model}
 \usage{
-rir_lm(model, treatment, alpha = 0.05, lambda = seq(0, 1, by = 0.001))
+rir_lm(
+  model,
+  treatment,
+  alpha = 0.05,
+  lambda = seq(0, 1, by = 0.001),
+  threshold = NULL
+)
 }
 \arguments{
 \item{model}{A fitted `lm` object.}
@@ -15,6 +21,11 @@ column of the model matrix).}
 \item{alpha}{Two-sided significance level.}
 
 \item{lambda}{Numeric vector of replacement proportions in \[0, 1\].}
+
+\item{threshold}{Optional effect threshold on the scale of the estimate
+(for example, the smallest effect that would justify a policy). When
+supplied, it replaces the significance threshold, as with `eff_thr` in
+konfound; its sign is taken from the estimate.}
 }
 \value{
 A list with `estimate`, `beta_threshold`, `perc_bias` (percent of
@@ -30,7 +41,7 @@ for a coefficient in a fitted linear model, and the corresponding path.
 Suppose a proportion \eqn{\lambda}{lambda} of the cases were replaced by
 cases in which the treatment has no effect. The estimate would then be
 \eqn{(1 - \lambda)\hat\beta}{(1 - lambda) * beta}. The inference is
-invalidated when this reaches the threshold for statistical significance
+nullified when this reaches the threshold for statistical significance
 \eqn{\beta^\# = \mathrm{sign}(\hat\beta)\, t_{\mathrm{crit}}\, SE}{beta# = sign(beta) * t_crit * SE},
 with the standard error held fixed. The crossing
 \eqn{1 - \beta^\# / \hat\beta}{1 - beta# / beta} is the proportion of the
@@ -42,6 +53,8 @@ cases this represents. The calculation follows `konfound::konfound()` with
 fit <- lm(mpg ~ am + wt + hp, data = mtcars)
 rr <- rir_lm(fit, "wt")
 rr[c("beta_threshold", "perc_bias", "rir")]
+# a substantive threshold instead of statistical significance
+rir_lm(fit, "wt", threshold = 2)$rir
 sens_report(rr$path)
 }
 \references{
@@ -50,6 +63,11 @@ Frank, K. A., Maroulis, S. J., Duong, M. Q., & Kelcey, B. M.
   model to interpret the robustness of causal inferences. *Educational
   Evaluation and Policy Analysis*, 35(4), 437--460.
   \doi{10.3102/0162373713493129}
+
+  Frank, K. A., Saw, G. K., Lin, Q., Xu, R., Rosenberg, J. M., Maroulis,
+  S. J., & Staudt Willet, K. B. (2025). *A practical guide to impact
+  threshold of a confounding variable (ITCV) and robustness of inference
+  to replacement (RIR)* (Version 2). \doi{10.31234/osf.io/pdgbz_v2}
 }
 \seealso{
 [itcv_lm()], [from_konfound()]

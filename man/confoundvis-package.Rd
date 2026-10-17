@@ -48,10 +48,5 @@ Useful links:
 \author{
 \strong{Maintainer}: Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
 
-Authors:
-\itemize{
-  \item Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
-}
-
 }
 \keyword{internal}

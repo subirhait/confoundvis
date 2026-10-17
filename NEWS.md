@@ -18,8 +18,16 @@
   bias, the number of cases that would have to be replaced with null-effect
   cases, and the corresponding path (estimate after replacing a proportion
   lambda of the cases). Results agree with `konfound::konfound(index =
-  "RIR")`. `from_konfound()` gains `index = "RIR"` to import konfound's RIR
-  output as a path.
+  "RIR")` and reproduce the worked example of Frank et al.'s (2025)
+  practical guide. A `threshold` argument allows a substantive effect
+  threshold in place of statistical significance. `from_konfound()` gains
+  `index = "RIR"` to import konfound's RIR output as a path.
+* ITCV benchmarks following Frank et al.'s (2025) practical guide:
+  `itcv_lm()` returns `benchmark_corr_product` (R_XZ * R_YZ, the impact of
+  all covariates together) and `itcv_ratio_to_benchmark` (eq. 12), and
+  `covariate_impacts()` adds each term's zero-order correlations, their
+  product `impact_zero`, and `itcv_ratio`, the unconditional ITCV divided by
+  that impact (eq. 10).
 * `sens_table()` collects several `confoundsens` objects into one table:
   framework, meaning of the sensitivity parameter, the framework's own
   summary statistic, null and significance crossings, and the rule used.

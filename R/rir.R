@@ -53,7 +53,7 @@
 #' Suppose a proportion \eqn{\lambda}{lambda} of the cases were replaced by
 #' cases in which the treatment has no effect. The estimate would then be
 #' \eqn{(1 - \lambda)\hat\beta}{(1 - lambda) * beta}. The inference is
-#' invalidated when this reaches the threshold for statistical significance
+#' nullified when this reaches the threshold for statistical significance
 #' \eqn{\beta^\# = \mathrm{sign}(\hat\beta)\, t_{\mathrm{crit}}\, SE}{beta# = sign(beta) * t_crit * SE},
 #' with the standard error held fixed. The crossing
 #' \eqn{1 - \beta^\# / \hat\beta}{1 - beta# / beta} is the proportion of the
@@ -64,6 +64,10 @@
 #' @inheritParams sens_path_lm
 #' @param alpha Two-sided significance level.
 #' @param lambda Numeric vector of replacement proportions in \[0, 1\].
+#' @param threshold Optional effect threshold on the scale of the estimate
+#'   (for example, the smallest effect that would justify a policy). When
+#'   supplied, it replaces the significance threshold, as with `eff_thr` in
+#'   konfound; its sign is taken from the estimate.
 #'
 #' @return A list with `estimate`, `beta_threshold`, `perc_bias` (percent of
 #'   the estimate that would have to be due to bias), `rir` (number of cases),
@@ -76,6 +80,11 @@
 #'   model to interpret the robustness of causal inferences. *Educational
 #'   Evaluation and Policy Analysis*, 35(4), 437--460.
 #'   \doi{10.3102/0162373713493129}
+#'
+#'   Frank, K. A., Saw, G. K., Lin, Q., Xu, R., Rosenberg, J. M., Maroulis,
+#'   S. J., & Staudt Willet, K. B. (2025). *A practical guide to impact
+#'   threshold of a confounding variable (ITCV) and robustness of inference
+#'   to replacement (RIR)* (Version 2). \doi{10.31234/osf.io/pdgbz_v2}
 #' @seealso [itcv_lm()], [from_konfound()]
 #' @export
 #'
@@ -83,16 +92,26 @@
 #' fit <- lm(mpg ~ am + wt + hp, data = mtcars)
 #' rr <- rir_lm(fit, "wt")
 #' rr[c("beta_threshold", "perc_bias", "rir")]
+#' # a substantive threshold instead of statistical significance
+#' rir_lm(fit, "wt", threshold = 2)$rir
 #' sens_report(rr$path)
 rir_lm <- function(model, treatment, alpha = 0.05,
-                   lambda = seq(0, 1, by = 0.001)) {
+                   lambda = seq(0, 1, by = 0.001), threshold = NULL) {
   pr <- .lm_parts(model, treatment)
   .check_lambda_prop(lambda)
   if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
   }
   n_obs <- nrow(pr$X)
-  beta_thr <- sign(pr$est) * stats::qt(1 - alpha / 2, pr$dof) * pr$se
+  beta_thr <- if (is.null(threshold)) {
+    sign(pr$est) * stats::qt(1 - alpha / 2, pr$dof) * pr$se
+  } else {
+    if (!is.numeric(threshold) || length(threshold) != 1L || is.na(threshold) ||
+        threshold == 0) {
+      stop("`threshold` must be a single nonzero number.", call. = FALSE)
+    }
+    sign(pr$est) * abs(threshold)
+  }
   path <- .rir_core(pr$est, beta_thr, n_obs, lambda, alpha,
                     source = "lm", treatment = treatment)
   m <- path$meta
