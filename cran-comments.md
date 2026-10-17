@@ -1,38 +1,32 @@
+## Update
+
+This is an update from confoundvis 0.2.0 to 0.3.0.
+
+* New: Rosenbaum bounds for matched pairs (`sens_path_pairs()`), robustness
+  of inference to replacement (`rir_lm()`), two-parameter sensitivity
+  surfaces (`sens_surface()`, `plot_sensitivity_surface()`), a summary
+  table (`sens_table()`), and an exact ITCV contour.
+* Removed exported functions: `fit_local_quadratic()`, `plot_local_taylor()`,
+  `plot_taylor_panels()`, `plot_figure2_taylor_panels()`,
+  `simulate_taylor_demo()`, `plot_reversal_cone()`, and
+  `plot_cone_comparison()`. These were stylized illustrations that did not
+  analyse data. The package has no reverse dependencies on CRAN.
+* 'grid' was removed from Imports and 'gridExtra' from Suggests.
+* All new Suggests packages ('DOS2', 'sensitivity2x2xk', 'sensitivitymv',
+  'ggrepel') are used conditionally in tests, examples, and the vignette.
+
 ## Test environments
-* local Windows 11, R 4.5.1
-* win-builder R-devel (2026-03-22)
-* win-builder R-release (R 4.5.3)
-* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macos-latest, windows-latest — all passing
-* R-hub: linux (R-devel), macos (R-devel), windows (R-devel)
+
+* local Windows 11, R 4.6.0
+* win-builder R-devel and R-release
+* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macos-latest,
+  windows-latest
 
 ## R CMD check results
-0 errors | 0 warnings | 0 note
 
-## Notes on flagged items
-* "checking for future file timestamps: unable to verify current time":
-  this is a transient network/firewall issue on the local Windows 11
-  machine that prevents the time-check from reaching an external server.
-  It is not reproducible on win-builder, R-hub, or GitHub Actions, and
-  is unrelated to package code.
-* "Possibly misspelled words": Cinelli, Hazlett, VanderWeele are author
-  surnames in cited references, not misspellings.
-* "Non-standard file cran-comments.md": added to .Rbuildignore.
+0 errors | 0 warnings | 0 notes
 
-## Resubmission
-This is a resubmission following a second review by Uwe Ligges.
+## Notes on possibly flagged items
 
-Changes from first resubmission:
-* Replaced invalid local URI `[LICENSE](LICENSE)` in README.md with a
-  shield.io badge linking to the full GPL-3 URL
-  (https://www.gnu.org/licenses/gpl-3.0), resolving the flagged
-  "possibly invalid file URI" note from urlchecker.
-* Rewrote README.md for consistency with package style conventions:
-  added logo, Overview section, Quick Start workflow, Plot Methods
-  section, Sensitivity Frameworks table, Author section, and blockquote
-  citation block.
-
-Changes from original submission (first resubmission, retained here for
-reference):
-* Changed License field from "GPL-3 + file LICENSE" to "GPL-3"
-* Removed the LICENSE file as it contained no additional restrictions
-  beyond the standard GPL-3 terms
+* "Possibly misspelled words": Cinelli, Hazlett, VanderWeele, Rosenbaum,
+  and konfound are author surnames or package names, not misspellings.
