@@ -7,13 +7,13 @@
 \method{as.data.frame}{confoundsens}(x, ...)
 }
 \arguments{
-\item{x}{A \code{confoundsens} object.}
+\item{x}{A `confoundsens` object.}
 
 \item{...}{Unused; included for S3 method consistency.}
 }
 \value{
-A data.frame with columns \code{lambda} and \code{theta}, plus optional
-columns \code{level}, \code{se}, and \code{t} when present in \code{x}.
+A data.frame with columns `lambda` and `theta`, plus optional
+  columns `level`, `se`, and `t` when present in `x`.
 }
 \description{
 Coerce a confoundsens object to a data frame

@@ -25,8 +25,8 @@ simulate_taylor_demo(
 \item{kappa}{Single non-negative numeric scalar. Curvature magnitude.}
 }
 \value{
-A named list with elements \code{linear}, \code{concave}, and \code{convex}, each
-a \code{\link[=new_confoundsens]{new_confoundsens()}} object.
+A named list with elements `linear`, `concave`, and `convex`, each
+  a [new_confoundsens()] object.
 }
 \description{
 Generates three synthetic sensitivity paths — linear, concave-down, and
@@ -38,9 +38,9 @@ the difference between tangent-based (first-order) and local quadratic
 \details{
 The three regimes are:
 \itemize{
-\item \strong{Linear}: \eqn{\theta(\delta) = \theta_0 + s\delta}
-\item \strong{Concave-down}: \eqn{\theta(\delta) = \theta_0 + s\delta - \kappa\delta^2}
-\item \strong{Convex-up}: \eqn{\theta(\delta) = \theta_0 + s\delta + \kappa\delta^2}
+  \item \strong{Linear}: \eqn{\theta(\delta) = \theta_0 + s\delta}
+  \item \strong{Concave-down}: \eqn{\theta(\delta) = \theta_0 + s\delta - \kappa\delta^2}
+  \item \strong{Convex-up}: \eqn{\theta(\delta) = \theta_0 + s\delta + \kappa\delta^2}
 }
 }
 \examples{

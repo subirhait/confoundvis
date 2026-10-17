@@ -4,31 +4,44 @@
 \alias{new_confoundsens}
 \title{Create a confoundsens object}
 \usage{
-new_confoundsens(lambda, theta, level = NULL, se = NULL, t = NULL)
+new_confoundsens(
+  lambda,
+  theta,
+  level = NULL,
+  se = NULL,
+  t = NULL,
+  meta = list()
+)
 }
 \arguments{
 \item{lambda}{Numeric vector of sensitivity strength values (e.g., ITCV
 lambda or delta). Should be nondecreasing; a warning is issued otherwise.}
 
 \item{theta}{Numeric vector of effect estimates along the sensitivity path.
-Must be the same length as \code{lambda}.}
+Must be the same length as `lambda`.}
 
 \item{level}{Optional character (or coercible) vector of level identifiers
-(e.g., \code{"within"}, \code{"between"}). Must be the same length as \code{lambda}.}
+(e.g., `"within"`, `"between"`). Must be the same length as `lambda`.}
 
-\item{se}{Optional numeric vector of standard errors for \code{theta}. Must be
-the same length as \code{lambda}.}
+\item{se}{Optional numeric vector of standard errors for `theta`. Must be
+the same length as `lambda`.}
 
 \item{t}{Optional numeric vector of test statistics along the path. Must be
-the same length as \code{lambda}.}
+the same length as `lambda`.}
+
+\item{meta}{Optional named list of metadata describing the path, for
+example `framework` (`"partial_r2"`, `"itcv"`, `"evalue"`, ...),
+`lambda_label`, `theta_label`, `null` (the value of `theta` that
+represents no effect), and `estimate`. Used by printing, plotting, and
+[sens_report()]; ignored otherwise.}
 }
 \value{
-A \code{confoundsens} object (a list with class \code{"confoundsens"}).
+A `confoundsens` object (a list with class `"confoundsens"`).
 }
 \description{
-Constructs a \code{confoundsens} object — a lightweight container for storing
+Constructs a `confoundsens` object — a lightweight container for storing
 sensitivity paths (e.g., \eqn{\theta(\lambda)}) and optional uncertainty or
-stratification information used by \code{confoundvis} plotting functions.
+stratification information used by `confoundvis` plotting functions.
 }
 \examples{
 x <- new_confoundsens(

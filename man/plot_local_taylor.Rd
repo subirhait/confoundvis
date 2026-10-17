@@ -8,24 +8,22 @@ plot_local_taylor(df, facet = FALSE)
 }
 \arguments{
 \item{df}{A data.frame in long form with columns:
-\itemize{
-\item \code{delta} — numeric; the confounding-strength grid.
-\item \code{series} — character or factor; name of each curve
-(e.g., \code{"path"}, \code{"tangent"}, \code{"quadratic"}).
-\item \code{value} — numeric; the effect value for each (delta, series) pair.
-}}
+* `delta` — numeric; the confounding-strength grid.
+* `series` — character or factor; name of each curve
+  (e.g., `"path"`, `"tangent"`, `"quadratic"`).
+* `value` — numeric; the effect value for each (delta, series) pair.}
 
-\item{facet}{Logical; if \code{TRUE}, produce a faceted plot with one panel per
-\code{series}. If \code{FALSE} (default), overlay all series on a single panel with
+\item{facet}{Logical; if `TRUE`, produce a faceted plot with one panel per
+`series`. If `FALSE` (default), overlay all series on a single panel with
 colour and linetype aesthetics.}
 }
 \value{
-A \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} object.
+A [ggplot2::ggplot()] object.
 }
 \description{
 Plots local Taylor series components (or any multi-series decomposition)
-as a function of \code{delta} from a long-form data.frame. Lines are
-distinguished by colour and linetype, keyed by \code{series}.
+as a function of `delta` from a long-form data.frame. Lines are
+distinguished by colour and linetype, keyed by `series`.
 }
 \examples{
 df <- data.frame(

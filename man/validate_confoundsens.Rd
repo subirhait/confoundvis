@@ -7,15 +7,15 @@
 validate_confoundsens(x)
 }
 \arguments{
-\item{x}{A \code{confoundsens} object.}
+\item{x}{A `confoundsens` object.}
 }
 \value{
 The validated (and possibly coerced) object, invisibly.
-Errors if the object is structurally invalid.
+  Errors if the object is structurally invalid.
 }
 \description{
 Internal validator used by constructors and methods. Checks that required
 fields are present and consistently sized, coerces optional fields, and
-issues a warning when \code{lambda} is not nondecreasing.
+issues a warning when `lambda` is not nondecreasing.
 }
 \keyword{internal}

@@ -3,7 +3,8 @@
 #' Converts a data frame containing sensitivity analysis results into a
 #' `confoundsens` object suitable for use with `confoundvis` plotting functions.
 #'
-#' @param data A data.frame containing sensitivity analysis results.
+#' @param data A data.frame containing sensitivity analysis results, a fitted
+#'   `lm` model, or a `sensemakr` object.
 #' @param lambda Character string; name of the column containing lambda values.
 #'   Default `"lambda"`.
 #' @param theta Character string; name of the column containing theta values.
@@ -15,8 +16,15 @@
 #' @param t Optional character string; name of the column containing test
 #'   statistics.
 #'
+#' @details `as_confoundsens()` is generic. The data-frame method (the 0.1.0
+#' behaviour) maps columns to fields. Methods for fitted `lm` models and
+#' `sensemakr` objects compute the partial \eqn{R^2} path via
+#' [sens_path_lm()] and [from_sensemakr()]; see also [from_konfound()] and
+#' [from_evalue()].
+#'
+#' @param ... Passed to methods. For `lm` objects, `treatment` (required),
+#'   `lambda`, and `ratio`; for `sensemakr` objects, `lambda` and `ratio`.
 #' @return A `confoundsens` object.
-#' @export
 #'
 #' @examples
 #' df <- data.frame(
@@ -27,16 +35,43 @@
 #' )
 #' x <- as_confoundsens(df)
 #' x
-as_confoundsens <- function(data,
+#'
+#' # Directly from a fitted model
+#' fit <- lm(mpg ~ am + wt + hp, data = mtcars)
+#' as_confoundsens(fit, treatment = "am")
+#' @export
+as_confoundsens <- function(data, ...) {
+  UseMethod("as_confoundsens")
+}
+
+#' @rdname as_confoundsens
+#' @export
+as_confoundsens.default <- function(data, ...) {
+  stop("`data` must be a data.frame, an lm fit, or a sensemakr object; got ",
+       paste(class(data), collapse = "/"), ".", call. = FALSE)
+}
+
+#' @rdname as_confoundsens
+#' @export
+as_confoundsens.lm <- function(data, ...) {
+  sens_path_lm(data, ...)
+}
+
+#' @rdname as_confoundsens
+#' @export
+as_confoundsens.sensemakr <- function(data, ...) {
+  from_sensemakr(data, ...)
+}
+
+#' @rdname as_confoundsens
+#' @export
+as_confoundsens.data.frame <- function(data,
                             lambda = "lambda",
                             theta  = "theta",
                             level  = NULL,
                             se     = NULL,
-                            t      = NULL) {
-
-  if (!is.data.frame(data)) {
-    stop("`data` must be a data.frame.", call. = FALSE)
-  }
+                            t      = NULL,
+                            ...) {
 
   .check_col <- function(nm, arg) {
     if (!is.character(nm) || length(nm) != 1L) {

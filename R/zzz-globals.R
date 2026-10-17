@@ -6,5 +6,5 @@ utils::globalVariables(c(
   "covariate", "impact",
   "r_yu", "r_du", "label",
   "delta", "value", "series",
-  "group"
+  "group", "q", "p", "zone", "theta_adj"
 ))

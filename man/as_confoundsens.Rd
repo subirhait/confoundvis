@@ -2,41 +2,65 @@
 % Please edit documentation in R/as_confoundsens.R
 \name{as_confoundsens}
 \alias{as_confoundsens}
+\alias{as_confoundsens.default}
+\alias{as_confoundsens.lm}
+\alias{as_confoundsens.sensemakr}
+\alias{as_confoundsens.data.frame}
 \title{Convert a data frame to a confoundsens object}
 \usage{
-as_confoundsens(
+as_confoundsens(data, ...)
+
+\method{as_confoundsens}{default}(data, ...)
+
+\method{as_confoundsens}{lm}(data, ...)
+
+\method{as_confoundsens}{sensemakr}(data, ...)
+
+\method{as_confoundsens}{data.frame}(
   data,
   lambda = "lambda",
   theta = "theta",
   level = NULL,
   se = NULL,
-  t = NULL
+  t = NULL,
+  ...
 )
 }
 \arguments{
-\item{data}{A data.frame containing sensitivity analysis results.}
+\item{data}{A data.frame containing sensitivity analysis results, a fitted
+`lm` model, or a `sensemakr` object.}
+
+\item{...}{Passed to methods. For `lm` objects, `treatment` (required),
+`lambda`, and `ratio`; for `sensemakr` objects, `lambda` and `ratio`.}
 
 \item{lambda}{Character string; name of the column containing lambda values.
-Default \code{"lambda"}.}
+Default `"lambda"`.}
 
 \item{theta}{Character string; name of the column containing theta values.
-Default \code{"theta"}.}
+Default `"theta"`.}
 
 \item{level}{Optional character string; name of the column containing level
-identifiers (e.g., \code{"within"} / \code{"between"}).}
+identifiers (e.g., `"within"` / `"between"`).}
 
 \item{se}{Optional character string; name of the column containing standard
-errors for \code{theta}.}
+errors for `theta`.}
 
 \item{t}{Optional character string; name of the column containing test
 statistics.}
 }
 \value{
-A \code{confoundsens} object.
+A `confoundsens` object.
 }
 \description{
 Converts a data frame containing sensitivity analysis results into a
-\code{confoundsens} object suitable for use with \code{confoundvis} plotting functions.
+`confoundsens` object suitable for use with `confoundvis` plotting functions.
+}
+\details{
+`as_confoundsens()` is generic. The data-frame method (the 0.1.0
+behaviour) maps columns to fields. Methods for fitted `lm` models and
+`sensemakr` objects compute the partial \eqn{R^2} path via
+[sens_path_lm()] and [from_sensemakr()]; see also [from_konfound()] and
+[from_evalue()].
 }
 \examples{
 df <- data.frame(
@@ -47,4 +71,8 @@ df <- data.frame(
 )
 x <- as_confoundsens(df)
 x
+
+# Directly from a fitted model
+fit <- lm(mpg ~ am + wt + hp, data = mtcars)
+as_confoundsens(fit, treatment = "am")
 }

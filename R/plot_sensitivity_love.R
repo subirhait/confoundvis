@@ -11,8 +11,10 @@
 #'   * `impact` — numeric impact values (e.g., ITCV product
 #'     \eqn{|r_{YU} \cdot r_{DU}|}, partial \eqn{R^2}, or other
 #'     confounding-strength metric).
-#' @param threshold Single non-missing numeric value to draw as a vertical
-#'   reference line (the sensitivity threshold).
+#' @param threshold Single non-missing numeric value. Defaults to the
+#'   `"threshold"` attribute of `df`, which [covariate_impacts()] sets. Drawn as a vertical
+#'   reference line (the sensitivity threshold). Rows with missing `impact`
+#'   are dropped.
 #' @param sort Logical; if `TRUE` (default), sort covariates by `impact` on
 #'   the y-axis (ascending).
 #' @param top Optional positive integer. If supplied, only the `top` covariates
@@ -28,8 +30,12 @@
 #' )
 #' plot_sensitivity_love(df, threshold = 0.10)
 #' plot_sensitivity_love(df, threshold = 0.10, top = 3)
+#'
+#' # From a fitted model: threshold is taken from covariate_impacts()
+#' fit <- lm(mpg ~ am + wt + hp + qsec, data = mtcars)
+#' plot_sensitivity_love(covariate_impacts(fit, "am"))
 plot_sensitivity_love <- function(df,
-                                  threshold,
+                                  threshold = attr(df, "threshold"),
                                   sort = TRUE,
                                   top  = NULL) {
   if (!is.data.frame(df)) {
@@ -41,11 +47,22 @@ plot_sensitivity_love <- function(df,
   if (!is.numeric(df$impact)) {
     stop("`df$impact` must be numeric.", call. = FALSE)
   }
+  if (is.null(threshold)) {
+    stop("`threshold` is missing and `df` has no \"threshold\" attribute.",
+         call. = FALSE)
+  }
   if (!is.numeric(threshold) || length(threshold) != 1L || is.na(threshold)) {
     stop("`threshold` must be a single non-missing numeric value.", call. = FALSE)
   }
 
-  d <- df
+  d <- df[!is.na(df$impact), , drop = FALSE]
+  if (nrow(d) == 0L) {
+    stop("`df$impact` has no non-missing values.", call. = FALSE)
+  }
+  xlab <- switch(if (is.null(attr(df, "metric"))) "" else attr(df, "metric"),
+                 itcv       = "Impact r(D,Z|W) x r(Y,Z|W) (positive = reduces estimate)",
+                 partial_r2 = "Bias index sqrt(R2yz.dx * R2dz.x / (1 - R2dz.x))",
+                 "Confounding impact strength")
   d$covariate <- as.character(d$covariate)
 
   if (!is.null(top)) {
@@ -69,8 +86,9 @@ plot_sensitivity_love <- function(df,
                         colour = "grey40") +
     ggplot2::geom_point(size = 2.5) +
     ggplot2::labs(
-      x = "Confounding impact strength",
+      x = xlab,
       y = NULL,
-      caption = paste0("Dashed line: sensitivity threshold = ", threshold)
+      caption = paste0("Dashed line: sensitivity threshold = ",
+                       formatC(threshold, digits = 3, format = "g"))
     )
 }

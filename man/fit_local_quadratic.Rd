@@ -14,20 +14,20 @@ fit_local_quadratic(
 )
 }
 \arguments{
-\item{data}{Optional data.frame containing columns named \code{delta} and
-\code{theta}. If supplied, the \code{delta} and \code{theta} arguments are ignored.}
+\item{data}{Optional data.frame containing columns named `delta` and
+`theta`. If supplied, the `delta` and `theta` arguments are ignored.}
 
 \item{delta}{Optional numeric vector of delta values. Used only when
-\code{data = NULL}.}
+`data = NULL`.}
 
 \item{theta}{Optional numeric vector of theta values. Used only when
-\code{data = NULL}.}
+`data = NULL`.}
 
 \item{local_max_delta}{Positive numeric scalar giving the half-width of the
-local window: only observations with \eqn{|\delta| \le} \code{local_max_delta}
+local window: only observations with \eqn{|\delta| \le} `local_max_delta`
 are used in the fit.}
 
-\item{include_intercept}{Logical; if \code{TRUE} (default), include an intercept
+\item{include_intercept}{Logical; if `TRUE` (default), include an intercept
 term.}
 
 \item{tol}{Non-negative numeric scalar tolerance used when selecting
@@ -35,13 +35,11 @@ observations within the local window.}
 }
 \value{
 A named list with elements:
-\itemize{
-\item \code{coef} — named coefficient vector from \code{\link[stats:lm]{stats::lm()}}.
-\item \code{intercept}, \code{slope}, \code{quad} — individual coefficients (NA when absent).
-\item \code{model} — the fitted \code{lm} object.
-\item \code{local_data} — the data.frame used for fitting.
-\item \code{local_max_delta} — the window half-width used.
-}
+  * `coef` — named coefficient vector from [stats::lm()].
+  * `intercept`, `slope`, `quad` — individual coefficients (NA when absent).
+  * `model` — the fitted `lm` object.
+  * `local_data` — the data.frame used for fitting.
+  * `local_max_delta` — the window half-width used.
 }
 \description{
 Fits a second-order Taylor (quadratic) approximation of an effect path
@@ -49,8 +47,8 @@ Fits a second-order Taylor (quadratic) approximation of an effect path
 \deqn{\theta(\delta) \approx a + b\delta + c\delta^2.}
 }
 \details{
-You may supply either a data.frame containing columns \code{delta} and \code{theta},
-or supply numeric vectors \code{delta} and \code{theta} directly.
+You may supply either a data.frame containing columns `delta` and `theta`,
+or supply numeric vectors `delta` and `theta` directly.
 }
 \examples{
 df <- data.frame(

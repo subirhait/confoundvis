@@ -5,7 +5,15 @@
 #' partitions the \eqn{(q, p)} confounding parameter space into an
 #' **attenuation zone** (where the effect shrinks but does not reverse sign)
 #' and a **reversal zone** (where the sign changes). The boundary between
-#' zones is the reversal curve derived from the multilevel mITCV framework.
+#' zones is the reversal curve.
+#'
+#' @details The display uses the stylized bilinear bias model
+#' \eqn{\theta_{adj} = \theta_0 - |\delta|\, q\, p}, so the reversal
+#' boundary is the hyperbola \eqn{p = \theta_0 / (|\delta| q)}. This is a
+#' conceptual map of the parameter space, not an estimate: the annotated
+#' "reversal share" is the fraction of the *displayed* grid that falls in the
+#' reversal zone and therefore depends on `q_range` and `p_range`. It should
+#' not be reported as a probability or as a property of the data.
 #'
 #' @param theta0 Numeric; baseline estimated effect at zero confounding (must
 #'   be nonzero).
@@ -17,7 +25,8 @@
 #'   impact parameter \eqn{p} (default `c(-1, 1)`).
 #' @param grid_n Integer; grid resolution for each axis (default 200).
 #' @param show_boundary Logical; draw the reversal boundary curve.
-#' @param show_volume Logical; annotate with the cone volume proportion.
+#' @param show_volume Logical; annotate with the share of the displayed grid
+#'   lying in the reversal zone.
 #'
 #' @return A ggplot object.
 #' @export
@@ -116,7 +125,7 @@ plot_reversal_cone <- function(theta0        = 0.40,
       "text",
       x = q_range[1] + 0.05 * diff(q_range),
       y = p_range[2] - 0.05 * diff(p_range),
-      label = sprintf("Reversal\nproportion\n= %.1f%%", 100 * vol_prop),
+      label = sprintf("Reversal share\nof displayed grid\n= %.1f%%", 100 * vol_prop),
       hjust = 0, vjust = 1, size = 3.2, color = "black"
     )
   }

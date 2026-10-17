@@ -4,28 +4,33 @@
 \alias{plot_sensitivity_love}
 \title{Sensitivity Love plot}
 \usage{
-plot_sensitivity_love(df, threshold, sort = TRUE, top = NULL)
+plot_sensitivity_love(
+  df,
+  threshold = attr(df, "threshold"),
+  sort = TRUE,
+  top = NULL
+)
 }
 \arguments{
 \item{df}{A data.frame with at least two columns:
-\itemize{
-\item \code{covariate} — covariate names (character or factor).
-\item \code{impact} — numeric impact values (e.g., ITCV product
-\eqn{|r_{YU} \cdot r_{DU}|}, partial \eqn{R^2}, or other
-confounding-strength metric).
-}}
+* `covariate` — covariate names (character or factor).
+* `impact` — numeric impact values (e.g., ITCV product
+  \eqn{|r_{YU} \cdot r_{DU}|}, partial \eqn{R^2}, or other
+  confounding-strength metric).}
 
-\item{threshold}{Single non-missing numeric value to draw as a vertical
-reference line (the sensitivity threshold).}
+\item{threshold}{Single non-missing numeric value. Defaults to the
+`"threshold"` attribute of `df`, which [covariate_impacts()] sets. Drawn as a vertical
+reference line (the sensitivity threshold). Rows with missing `impact`
+are dropped.}
 
-\item{sort}{Logical; if \code{TRUE} (default), sort covariates by \code{impact} on
+\item{sort}{Logical; if `TRUE` (default), sort covariates by `impact` on
 the y-axis (ascending).}
 
-\item{top}{Optional positive integer. If supplied, only the \code{top} covariates
+\item{top}{Optional positive integer. If supplied, only the `top` covariates
 with the largest absolute impact are displayed.}
 }
 \value{
-A \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} object.
+A [ggplot2::ggplot()] object.
 }
 \description{
 Benchmarks a sensitivity threshold against the empirical distribution of
@@ -41,4 +46,8 @@ df <- data.frame(
 )
 plot_sensitivity_love(df, threshold = 0.10)
 plot_sensitivity_love(df, threshold = 0.10, top = 3)
+
+# From a fitted model: threshold is taken from covariate_impacts()
+fit <- lm(mpg ~ am + wt + hp + qsec, data = mtcars)
+plot_sensitivity_love(covariate_impacts(fit, "am"))
 }

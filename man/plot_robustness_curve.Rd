@@ -9,30 +9,36 @@ plot_robustness_curve(
   what = c("theta", "t"),
   bands = TRUE,
   points = TRUE,
-  facet_level = TRUE
+  facet_level = TRUE,
+  reference = TRUE
 )
 }
 \arguments{
-\item{x}{A \code{confoundsens} object created by \code{\link[=new_confoundsens]{new_confoundsens()}} or
-\code{\link[=as_confoundsens]{as_confoundsens()}}.}
+\item{x}{A `confoundsens` object created by [new_confoundsens()] or
+[as_confoundsens()].}
 
-\item{what}{Character; which path to plot: \code{"theta"} (default) or \code{"t"}.}
+\item{what}{Character; which path to plot: `"theta"` (default) or `"t"`.}
 
-\item{bands}{Logical; if \code{TRUE} and \code{x$se} is present, draw 95\% pointwise
-confidence bands (applies only when \code{what = "theta"}).}
+\item{bands}{Logical; if `TRUE` and `x$se` is present, draw 95% pointwise
+confidence bands (applies only when `what = "theta"`).}
 
-\item{points}{Logical; if \code{TRUE}, overlay points on the line.}
+\item{points}{Logical; if `TRUE`, overlay points on the line.}
 
-\item{facet_level}{Logical; if \code{TRUE} and \code{x$level} is present, facet the
+\item{facet_level}{Logical; if `TRUE` and `x$level` is present, facet the
 plot by level.}
+
+\item{reference}{Logical; if `TRUE` (default) and `x$meta` records a null
+value (`meta$null`) or a critical value (`meta$threshold`), draw them as
+horizontal reference lines (dotted and dashed respectively). Objects
+created by [new_confoundsens()] without `meta` are unaffected.}
 }
 \value{
-A \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} object.
+A [ggplot2::ggplot()] object.
 }
 \description{
-Plots the sensitivity path stored in a \code{confoundsens} object as a function
-of \code{lambda}. By default, plots the effect path \code{theta(lambda)}; optionally
-plots the test-statistic path \code{t(lambda)}. Pointwise 95\% confidence bands
+Plots the sensitivity path stored in a `confoundsens` object as a function
+of `lambda`. By default, plots the effect path `theta(lambda)`; optionally
+plots the test-statistic path `t(lambda)`. Pointwise 95% confidence bands
 are drawn when standard errors are available.
 }
 \examples{

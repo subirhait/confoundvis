@@ -11,6 +11,10 @@
 #' @param bands Logical; if `TRUE` and `x$se` is present, draw 95% pointwise
 #'   confidence bands (applies only when `what = "theta"`).
 #' @param points Logical; if `TRUE`, overlay points on the line.
+#' @param reference Logical; if `TRUE` (default) and `x$meta` records a null
+#'   value (`meta$null`) or a critical value (`meta$threshold`), draw them as
+#'   horizontal reference lines (dotted and dashed respectively). Objects
+#'   created by [new_confoundsens()] without `meta` are unaffected.
 #' @param facet_level Logical; if `TRUE` and `x$level` is present, facet the
 #'   plot by level.
 #'
@@ -30,7 +34,8 @@ plot_robustness_curve <- function(x,
                                   what        = c("theta", "t"),
                                   bands       = TRUE,
                                   points      = TRUE,
-                                  facet_level = TRUE) {
+                                  facet_level = TRUE,
+                                  reference   = TRUE) {
   what <- match.arg(what)
 
   if (!inherits(x, "confoundsens")) {
@@ -61,11 +66,28 @@ plot_robustness_curve <- function(x,
   df$lo <- df$y - 1.96 * df$se
   df$hi <- df$y + 1.96 * df$se
 
-  ylab <- if (what == "theta") expression(theta(lambda)) else expression(t(lambda))
+  meta <- x$meta
+  ylab <- if (what == "theta") {
+    if (!is.null(meta$theta_label)) meta$theta_label else expression(theta(lambda))
+  } else expression(t(lambda))
+  xlab <- if (!is.null(meta$lambda_label)) meta$lambda_label else expression(lambda)
 
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$lambda, y = .data$y)) +
-    ggplot2::geom_line() +
-    ggplot2::labs(x = expression(lambda), y = ylab)
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$lambda, y = .data$y))
+
+  if (isTRUE(reference)) {
+    ref <- if (what == "theta") meta$null else if (length(meta)) 0 else NULL
+    if (!is.null(ref)) {
+      p <- p + ggplot2::geom_hline(yintercept = ref, linetype = "dotted",
+                                   colour = "grey40")
+    }
+    if (what == "theta" && !is.null(meta$threshold)) {
+      p <- p + ggplot2::geom_hline(yintercept = meta$threshold,
+                                   linetype = "dashed", colour = "grey40")
+    }
+  }
+
+  p <- p + ggplot2::geom_line() +
+    ggplot2::labs(x = xlab, y = ylab)
 
   if (isTRUE(bands) && what == "theta" && !all(is.na(df$se))) {
     p <- p + ggplot2::geom_ribbon(

@@ -8,23 +8,23 @@ plot_sensitivity_contour(threshold, grid_n = 200, benchmarks = NULL)
 }
 \arguments{
 \item{threshold}{Positive numeric scalar; the ITCV-style product threshold.
-The boundary satisfies \eqn{|r_{YU} \cdot r_{DU}| = } \code{threshold}.}
+The boundary satisfies \eqn{|r_{YU} \cdot r_{DU}| = } `threshold`.}
 
 \item{grid_n}{Integer >= 50; number of points used per branch of the
 boundary curve. Larger values give smoother curves.}
 
-\item{benchmarks}{Optional data.frame with columns \code{r_yu} and \code{r_du}
-(numeric) and an optional \code{label} column (character). Each row is plotted
+\item{benchmarks}{Optional data.frame with columns `r_yu` and `r_du`
+(numeric) and an optional `label` column (character). Each row is plotted
 as a labelled benchmark point.}
 }
 \value{
-A \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} object.
+A [ggplot2::ggplot()] object.
 }
 \description{
 Draws an ITCV-style hyperbolic boundary in \eqn{(r_{YU}, r_{DU})} space
 and optionally overlays observed covariate benchmarks as labelled points.
 The robust region is the interior of the hyperbola where
-\eqn{|r_{YU} \cdot r_{DU}| < } \code{threshold}.
+\eqn{|r_{YU} \cdot r_{DU}| < } `threshold`.
 }
 \examples{
 b <- data.frame(

@@ -15,6 +15,12 @@
 #' @param t Optional numeric vector of test statistics along the path. Must be
 #'   the same length as `lambda`.
 #'
+#' @param meta Optional named list of metadata describing the path, for
+#'   example `framework` (`"partial_r2"`, `"itcv"`, `"evalue"`, ...),
+#'   `lambda_label`, `theta_label`, `null` (the value of `theta` that
+#'   represents no effect), and `estimate`. Used by printing, plotting, and
+#'   [sens_report()]; ignored otherwise.
+#'
 #' @return A `confoundsens` object (a list with class `"confoundsens"`).
 #' @export
 #'
@@ -29,7 +35,8 @@ new_confoundsens <- function(lambda,
                              theta,
                              level = NULL,
                              se    = NULL,
-                             t     = NULL) {
+                             t     = NULL,
+                             meta  = list()) {
   if (!is.numeric(lambda)) stop("`lambda` must be a numeric vector.", call. = FALSE)
   if (!is.numeric(theta))  stop("`theta` must be a numeric vector.",  call. = FALSE)
 
@@ -38,7 +45,8 @@ new_confoundsens <- function(lambda,
     theta  = theta,
     level  = level,
     se     = se,
-    t      = t
+    t      = t,
+    meta   = meta
   )
   class(x) <- "confoundsens"
 

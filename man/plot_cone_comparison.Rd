@@ -21,16 +21,16 @@ plot_cone_comparison(
 
 \item{delta_between}{Numeric; between-cluster confounding magnitude (> 0).}
 
-\item{...}{Additional arguments passed to \code{\link[=plot_reversal_cone]{plot_reversal_cone()}}.}
+\item{...}{Additional arguments passed to [plot_reversal_cone()].}
 }
 \value{
-Invisibly, a list with ggplot objects \code{within} and \code{between}.
-The plots are drawn side-by-side to the current device.
+Invisibly, a list with ggplot objects `within` and `between`.
+  The plots are drawn side-by-side to the current device.
 }
 \description{
 Produces a two-panel plot comparing the reversal cone cross-sections for
 the within-cluster and between-cluster confounding components in multilevel
-settings. Each panel calls \code{\link[=plot_reversal_cone]{plot_reversal_cone()}} and they are displayed
+settings. Each panel calls [plot_reversal_cone()] and they are displayed
 side by side using faceting.
 }
 \examples{

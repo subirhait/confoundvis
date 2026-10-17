@@ -7,13 +7,13 @@
 \method{summary}{confoundsens}(object, ...)
 }
 \arguments{
-\item{object}{A \code{confoundsens} object.}
+\item{object}{A `confoundsens` object.}
 
 \item{...}{Unused; included for S3 method consistency.}
 }
 \value{
-An object of class \code{summary.confoundsens} containing a \code{table}
-data.frame with per-level summary statistics.
+An object of class `summary.confoundsens` containing a `table`
+  data.frame with per-level summary statistics.
 }
 \description{
 Produces a concise numerical summary of the sensitivity path, optionally

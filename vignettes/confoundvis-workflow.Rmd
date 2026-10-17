@@ -1,0 +1,212 @@
+---
+title: "From a fitted model to a sensitivity report"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{From a fitted model to a sensitivity report}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+has_sm <- requireNamespace("sensemakr", quietly = TRUE)
+has_kf <- requireNamespace("konfound", quietly = TRUE)
+has_ev <- requireNamespace("EValue", quietly = TRUE)
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 6.5, fig.height = 4, eval = has_sm)
+```
+
+```{r, eval = !has_sm, echo = FALSE, results = "asis"}
+cat("*This vignette needs the 'sensemakr' package for the example data;",
+    "install it to see the output.*")
+```
+
+This vignette walks through the complete workflow:
+
+```
+fitted model -> sensitivity path -> confoundsens object -> plots -> report
+```
+
+using a real, publicly available dataset.
+
+## Data and model
+
+The `darfur` data (Hazlett, 2020), distributed with the **sensemakr**
+package, come from a survey of Darfurian refugees in eastern Chad. The
+question is whether being directly harmed in the violence
+(`directlyharmed`) changed attitudes toward peace (`peacefactor`). Following
+Cinelli and Hazlett (2020), we adjust for age, occupation, past voting,
+household size, sex, and village fixed effects.
+
+```{r model}
+library(confoundvis)
+data("darfur", package = "sensemakr")
+
+fit <- lm(peacefactor ~ directlyharmed + age + farmer_dar + herder_dar +
+            pastvoted + hhsize_darfur + female + village, data = darfur)
+coef(summary(fit))["directlyharmed", ]
+```
+
+## Step 1: compute sensitivity paths
+
+A *sensitivity path* is the treatment estimate as a function of the strength
+$\lambda$ of a hypothetical omitted confounder. `confoundvis` computes paths
+for two regression frameworks directly from the fitted model.
+
+**Partial $R^2$ (Cinelli and Hazlett, 2020).** $\lambda$ is the partial
+$R^2$ of the confounder with both treatment and outcome:
+
+```{r path-r2}
+p_r2 <- sens_path_lm(fit, treatment = "directlyharmed",
+                     lambda = seq(0, 0.3, by = 0.001))
+p_r2
+```
+
+**Impact threshold (Frank, 2000).** $\lambda$ is the impact
+$k = r_{DU}\,r_{YU}$; the path is the adjusted partial correlation:
+
+```{r path-itcv}
+it <- itcv_lm(fit, treatment = "directlyharmed",
+              lambda = seq(0, 0.3, by = 0.001))
+c(r = it$r, r_crit = it$r_crit, ITCV = it$itcv,
+  ITCV_unconditional = it$itcv_unconditional)
+```
+
+Both results are `confoundsens` objects, so everything downstream is the
+same regardless of framework.
+
+## Step 2: plot the paths
+
+```{r curve-r2}
+plot_robustness_curve(p_r2, points = FALSE)
+```
+
+The dotted line is the null. The band is a pointwise 95% interval for the
+bias-adjusted estimate.
+
+```{r curve-itcv}
+plot_robustness_curve(it$path, points = FALSE)
+```
+
+On the ITCV path the dashed line marks the critical correlation; the path
+crosses it exactly at the ITCV.
+
+## Step 3: benchmark against observed covariates
+
+A threshold alone does not say whether an omitted confounder that strong is
+plausible. The usual aid is to compare it with observed covariates.
+`covariate_impacts()` computes, for every covariate term, its partial
+associations with treatment and outcome.
+
+```{r impacts}
+imp <- covariate_impacts(fit, "directlyharmed", metric = "partial_r2")
+imp[order(-imp$impact), c("covariate", "term_df", "r2dz.x", "r2yz.dx",
+                          "bias_index")]
+```
+
+The sensitivity Love plot places each covariate on the chosen metric and
+draws the threshold. With `metric = "partial_r2"`, a covariate to the right
+of the line would, if an omitted confounder were equally strong, bring the
+point estimate to zero.
+
+```{r love}
+plot_sensitivity_love(imp)
+```
+
+The ITCV metric uses signed products of partial correlations and is defined
+for single-column terms; the multi-column `village` term is dropped with a
+message.
+
+```{r love-itcv}
+imp_it <- covariate_impacts(fit, "directlyharmed", metric = "itcv")
+plot_sensitivity_love(imp_it)
+```
+
+The same object supplies benchmarks for the ITCV contour:
+
+```{r contour}
+plot_sensitivity_contour(attr(imp_it, "threshold"),
+                         benchmarks = imp_it[!is.na(imp_it$r_yu), ])
+```
+
+## Step 4: a plain-language report
+
+```{r report}
+sens_report(p_r2)
+sens_report(it$path)
+```
+
+`robustness_points()` returns the same numbers as a data frame for tables.
+On the partial $R^2$ path, the null crossing is the robustness value and the
+significance crossing is the robustness value at $\alpha = 0.05$ reported by
+**sensemakr**.
+
+## Using results from other packages
+
+If an analysis was run with another package, convert its result instead of
+recomputing it.
+
+```{r sensemakr}
+s <- sensemakr::sensemakr(fit, treatment = "directlyharmed",
+                          benchmark_covariates = "female", kd = 1:3)
+p_sm <- from_sensemakr(s, lambda = seq(0, 0.3, by = 0.001))
+robustness_points(p_sm)
+unlist(s$sensitivity_stats[c("rv_q", "rv_qa")])
+```
+
+```{r konfound, eval = has_sm && has_kf}
+k <- suppressWarnings(suppressMessages(
+  konfound::konfound(fit, directlyharmed, to_return = "raw_output")))
+p_kf <- from_konfound(k, lambda = seq(0, 0.3, by = 0.001))
+c(confoundvis = it$itcv, konfound_itcvGz = k$itcvGz)
+```
+
+For binary or ratio-scale outcomes, E-value results convert to a path on
+the log risk-ratio scale that crosses the null at the E-value:
+
+```{r evalue, eval = has_ev}
+e <- EValue::evalues.RR(est = 1.8, lo = 1.3, hi = 2.5)
+p_ev <- from_evalue(e, lambda = seq(1, 4, by = 0.01))
+plot_robustness_curve(p_ev, points = FALSE)
+```
+
+## What this package does and does not do
+
+`confoundvis` is a presentation layer. Its computations reproduce the
+published formulas of each framework (the test suite checks them against
+**sensemakr**, **konfound**, and **EValue**), and its contribution is a
+shared object and a shared set of displays. It inherits every assumption of
+the framework that generated a path. In particular:
+
+* A sensitivity path answers "how strong would confounding have to be?", not
+  "is there such a confounder?" Only substantive knowledge can judge that.
+* Covariate benchmarks describe observed variables. An omitted confounder can
+  be stronger than every measured covariate, and benchmarks can themselves be
+  distorted when the omitted confounder is correlated with them.
+* The partial $R^2$ and ITCV paths are for linear regression coefficients.
+  The E-value path concerns ratio measures; its bias factor is a bound, not an
+  exact adjustment.
+* No display repairs a flawed identification strategy (for example, bad
+  controls, selection, or measurement error in the treatment).
+* The geometric illustrations (`plot_reversal_cone()`, `plot_taylor_panels()`)
+  are conceptual tools built on stylized models and do not analyse data.
+
+## References
+
+Cinelli, C., & Hazlett, C. (2020). Making sense of sensitivity: Extending
+omitted variable bias. *Journal of the Royal Statistical Society: Series B*,
+82(1), 39–67.
+
+Frank, K. A. (2000). Impact of a confounding variable on a regression
+coefficient. *Sociological Methods & Research*, 29(2), 147–194.
+
+Frank, K. A., Maroulis, S. J., Duong, M. Q., & Kelcey, B. M. (2013). What
+would it take to change an inference? *Educational Evaluation and Policy
+Analysis*, 35(4), 437–460.
+
+Hazlett, C. (2020). Angry or weary? How violence impacts attitudes toward
+peace among Darfurian refugees. *Journal of Conflict Resolution*, 64(5),
+844–870.
+
+VanderWeele, T. J., & Ding, P. (2017). Sensitivity analysis in observational
+research: Introducing the E-value. *Annals of Internal Medicine*, 167(4),
+268–274.

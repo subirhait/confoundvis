@@ -1,9 +1,9 @@
-#' Three-panel Taylor approximation figure
+#' Three-panel Taylor approximation illustration
 #'
 #' Produces a three-panel figure (linear / concave-down / convex-up) showing
 #' a simulated confounding path together with its first-order (tangent) and
-#' second-order (local quadratic) approximations. The panels correspond to
-#' the three curvature regimes in the mITCV framework.
+#' second-order (local quadratic) approximations, for three curvature
+#' regimes: linear, concave-down, and convex-up.
 #'
 #' @param delta_max Positive numeric scalar. Upper bound of the delta grid.
 #' @param step Positive numeric scalar. Grid step size.
@@ -19,11 +19,16 @@
 #'   \pkg{gridExtra} is installed, or via [graphics::layout()] otherwise.
 #' @export
 #'
+#' @details This is a didactic illustration built from simulated paths
+#'   ([simulate_taylor_demo()]); it does not analyse data. It was called
+#'   `plot_figure2_taylor_panels()` in version 0.1.0; that name still works
+#'   but is deprecated.
+#'
 #' @examples
-#' plots <- plot_figure2_taylor_panels()
+#' plots <- plot_taylor_panels()
 #' # Access individual panels
 #' plots$A
-plot_figure2_taylor_panels <- function(delta_max       = 1.5,
+plot_taylor_panels <- function(delta_max       = 1.5,
                                        step            = 0.02,
                                        theta0          = 0.40,
                                        slope           = -0.70,
@@ -103,4 +108,13 @@ plot_figure2_taylor_panels <- function(delta_max       = 1.5,
   }
 
   invisible(list(A = pA, B = pB, C = pC))
+}
+
+
+#' @rdname plot_taylor_panels
+#' @usage NULL
+#' @export
+plot_figure2_taylor_panels <- function(...) {
+  .Deprecated("plot_taylor_panels", package = "confoundvis")
+  plot_taylor_panels(...)
 }

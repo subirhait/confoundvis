@@ -22,12 +22,18 @@ library(confoundvis)
 ## Overview
 
 `confoundvis` provides a unified, ggplot2-native visualization toolkit for
-causal sensitivity analysis under unmeasured confounding. It supports multiple
-frameworks — the Impact Threshold for a Confounding Variable (ITCV; Frank 2000),
-partial R²-based methods (Cinelli & Hazlett 2020), and the multilevel mITCV
-extension — and introduces the **Sensitivity Love Plot**, a novel diagnostic
-that benchmarks sensitivity thresholds against observed covariate impacts in
-a format familiar from propensity score analysis.
+causal sensitivity analysis under unmeasured confounding. It supports the
+Impact Threshold for a Confounding Variable (ITCV; Frank 2000), partial
+R²-based methods (Cinelli & Hazlett 2020), and E-values (VanderWeele & Ding
+2017). The common object can also display stratified or multilevel
+sensitivity paths supplied by the analyst. The package offers a
+**sensitivity Love plot** that displays observed
+covariate benchmarks against a sensitivity threshold in the dot-plot format
+familiar from propensity score balance checks.
+
+This vignette shows the plotting layer with hand-built inputs. For the full
+workflow starting from a fitted model, see
+`vignette("confoundvis-workflow")`.
 
 ## The `confoundsens` object
 
@@ -107,8 +113,7 @@ plot_sensitivity_contour(threshold = 0.025, benchmarks = benchmarks) +
 
 ## Sensitivity Love plot
 
-The **Sensitivity Love Plot** is the key novel contribution of `confoundvis`.
-It adapts the Love plot — widely used to assess covariate balance in propensity
+The **sensitivity Love plot** adapts the Love plot — widely used to assess covariate balance in propensity
 score analysis — to the sensitivity analysis context. Each observed covariate
 appears as a point on a horizontal impact axis. The vertical dashed line marks
 the sensitivity threshold: covariates to its left are weaker than the threshold,
@@ -220,6 +225,10 @@ coefficient. *Sociological Methods & Research*, 29(2), 147–194.
 Cinelli, C., & Hazlett, C. (2020). Making sense of sensitivity: Extending
 omitted variable bias. *Journal of the Royal Statistical Society: Series B*,
 82(1), 39–67.
+
+VanderWeele, T. J., & Ding, P. (2017). Sensitivity analysis in observational
+research: Introducing the E-value. *Annals of Internal Medicine*, 167(4),
+268–274.
 
 Austin, P. C., & Stuart, E. A. (2015). Moving towards best practice when using
 inverse probability of treatment weighting. *Statistics in Medicine*, 34(28),

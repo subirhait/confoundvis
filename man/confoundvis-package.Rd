@@ -2,24 +2,51 @@
 % Please edit documentation in R/zzz.R
 \docType{package}
 \name{confoundvis-package}
-\alias{confoundvis-package}
 \alias{confoundvis}
-\title{confoundvis: Geometric Visualization Tools for Causal Sensitivity Analysis}
+\alias{confoundvis-package}
+\title{confoundvis: Visualization and Reporting Tools for Sensitivity Analysis}
 \description{
-Provides visualization tools for sensitivity analysis under unmeasured
-confounding, including sensitivity contour plots, robustness curves,
-sensitivity Love plots, and local Taylor diagnostic plots.
+Draws and reports sensitivity analyses for unmeasured confounding. A
+common `confoundsens` object stores a sensitivity path (the treatment
+estimate as a function of hypothetical confounder strength) regardless of
+the framework that produced it, so the same displays and reports work for
+impact threshold (ITCV) analysis, partial R-squared omitted-variable bias
+analysis, and E-values.
+}
+\details{
+Main entry points:
+\itemize{
+  \item Paths from fitted models: [sens_path_lm()], [itcv_lm()].
+  \item Paths from other packages: [from_sensemakr()], [from_konfound()],
+    [from_evalue()], or [as_confoundsens()] for data frames of
+    precomputed (including stratified or multilevel) paths.
+  \item Covariate benchmarks: [covariate_impacts()].
+  \item Plots: [plot_robustness_curve()], [plot_sensitivity_love()],
+    [plot_sensitivity_contour()], [plot_local_taylor()].
+  \item Reporting: [robustness_points()], [sens_report()].
+  \item Conceptual illustrations built on stylized models:
+    [plot_reversal_cone()], [plot_taylor_panels()].
+}
+
+A sensitivity display shows how strong confounding would have to be to
+change a conclusion. It cannot show whether such a confounder exists, and
+it inherits the assumptions of the framework that produced the path.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/causalfragility-lab/confoundvis}
-  \item Report bugs at \url{https://github.com/causalfragility-lab/confoundvis/issues}
+  \item \url{https://github.com/subirhait/confoundvis}
+  \item Report bugs at \url{https://github.com/subirhait/confoundvis/issues}
 }
 
 }
 \author{
 \strong{Maintainer}: Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
+
+Authors:
+\itemize{
+  \item Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
+}
 
 }
 \keyword{internal}

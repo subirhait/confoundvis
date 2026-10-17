@@ -39,6 +39,11 @@ print.confoundsens <- function(x, ...) {
 
   cat("  se     :", if (has_se) "yes" else "no", "\n")
   cat("  t      :", if (has_t)  "yes" else "no", "\n")
+  if (length(x$meta) && !is.null(x$meta$framework)) {
+    cat("  frame  :", x$meta$framework,
+        if (!is.null(x$meta$source)) paste0("(from ", x$meta$source, ")") else "",
+        "\n")
+  }
 
   invisible(x)
 }

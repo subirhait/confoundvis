@@ -7,15 +7,15 @@
 \method{print}{confoundsens}(x, ...)
 }
 \arguments{
-\item{x}{A \code{confoundsens} object.}
+\item{x}{A `confoundsens` object.}
 
 \item{...}{Unused; included for S3 method consistency.}
 }
 \value{
-\code{x}, invisibly.
+`x`, invisibly.
 }
 \description{
-Prints a concise summary of the key fields in a \code{confoundsens} object.
+Prints a concise summary of the key fields in a `confoundsens` object.
 }
 \examples{
 x <- new_confoundsens(

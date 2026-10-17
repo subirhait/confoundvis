@@ -57,9 +57,19 @@ validate_confoundsens <- function(x) {
     }
   }
 
+  # Optional: meta (added in 0.2.0; absent in objects built by 0.1.0)
+  if (is.null(x$meta)) x$meta <- list()
+  if (!is.list(x$meta)) {
+    stop("`x$meta` must be a list.", call. = FALSE)
+  }
+
   # Non-fatal warning for non-monotone lambda
-  if (n >= 2L && any(diff(x$lambda) < 0)) {
-    warning("`x$lambda` is not nondecreasing; plots may look odd.",
+  grp <- if (is.null(x$level)) rep("", n) else x$level
+  non_mono <- any(vapply(split(x$lambda, grp),
+                         function(l) length(l) >= 2L && any(diff(l) < 0),
+                         logical(1)))
+  if (non_mono) {
+    warning("`x$lambda` is not nondecreasing within level; plots may look odd.",
             call. = FALSE)
   }
 
