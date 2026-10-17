@@ -20,9 +20,11 @@ Description: A common interface to established sensitivity analyses for
     (VanderWeele and Ding, 2017, <doi:10.7326/M16-2607>), and Rosenbaum
     bounds for matched pairs (Rosenbaum, 2002,
     <doi:10.1007/978-1-4757-3692-2>) are stored in one object that keeps
-    each framework's own parameter. The same robustness curves, contour
-    plots, two-parameter surfaces, covariate benchmark plots, summary
-    tables, and plain-language reports then apply to all of them. Results
+    each framework's own parameter. Robustness curves, summary tables,
+    and plain-language reports are available for every framework;
+    two-parameter surfaces, the exact correlation contour, and
+    observed-covariate benchmarks are provided where the corresponding
+    framework defines them. Results
     can be computed from fitted models or matched-pair differences, or
     converted from the 'sensemakr', 'konfound', and 'EValue' packages, and
     agree with those packages.

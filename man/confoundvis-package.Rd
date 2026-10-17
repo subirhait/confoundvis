@@ -11,8 +11,11 @@ confounding. Results from the impact threshold (ITCV) and robustness of
 inference to replacement (RIR) frameworks ('konfound'), partial
 R-squared omitted-variable bias analysis ('sensemakr'), E-values
 ('EValue'), and Rosenbaum bounds for matched pairs ('DOS2',
-'sensitivitymv') are stored in one `confoundsens` object, so the same
-plots, tables, and plain-language reports apply to all of them. Each
+'sensitivitymv') are stored in one `confoundsens` object. Robustness
+curves, summary tables, and plain-language reports are available for
+every framework; two-parameter surfaces, the exact correlation contour,
+and observed-covariate benchmarks are provided where the framework
+defines them. Each
 result keeps the parameter and the published formula of its own
 framework; confoundvis adds no new sensitivity parameter or measure.
 }

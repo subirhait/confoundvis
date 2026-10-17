@@ -6,9 +6,10 @@
 
 **confoundvis** is a common interface to established sensitivity analyses for
 unmeasured confounding. Each framework keeps its own parameter and its own
-published formula. confoundvis stores the results in one object, so the same
-plots, tables, and plain-language reports apply to all of them. It adds no new
-sensitivity parameter or measure.
+published formula. confoundvis stores the results in one object. Robustness
+curves, tables, and reports work for every framework; surfaces, contours, and
+covariate benchmarks are provided only where the framework defines them. It
+adds no new sensitivity parameter or measure.
 
 | Framework | Source | confoundvis function | Agrees with |
 |---|---|---|---|
@@ -18,17 +19,20 @@ sensitivity parameter or measure.
 | E-value | VanderWeele & Ding (2017) | `from_evalue()` | `EValue` |
 | Rosenbaum bounds, matched pairs | Rosenbaum (2002) | `sens_path_pairs()` | `DOS2`, `sensitivity2x2xk`, `sensitivitymv` |
 
-Shared tools for every framework:
+## Common and framework-specific tools
 
-| Function | Purpose |
-|---|---|
-| `robustness_points()` | Where the estimate reaches the null and where significance is lost |
-| `plot_robustness_curve()` | The adjusted estimate over the framework's parameter |
-| `sens_surface()`, `plot_sensitivity_surface()` | The framework's two-parameter plane with its boundaries |
-| `plot_sensitivity_contour()` | Exact ITCV boundary in the correlation plane |
-| `covariate_impacts()`, `plot_sensitivity_love()` | Benchmarks from measured covariates |
-| `sens_table()` | Several analyses side by side, each in its own units |
-| `sens_report()` | A plain-language summary |
+| Tool | Partial R² | ITCV | RIR | E-value | Rosenbaum |
+|---|:-:|:-:|:-:|:-:|:-:|
+| `plot_robustness_curve()`, `robustness_points()` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_table()` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_report()` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_surface()`, `plot_sensitivity_surface()` | ✓ | ✓ | – | ✓ | ✓ |
+| `covariate_impacts()`, `plot_sensitivity_love()` | ✓ | ✓ | – | – | – |
+| `plot_sensitivity_contour()` (exact correlation contour) | – | ✓ | – | – | – |
+
+RIR has a single sensitivity parameter, so it has no two-parameter surface.
+Covariate benchmarks need a fitted linear model, so they are not available for
+E-values or matched pairs.
 
 ## Installation
 
