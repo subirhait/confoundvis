@@ -28,6 +28,15 @@
   `covariate_impacts()` adds each term's zero-order correlations, their
   product `impact_zero`, and `itcv_ratio`, the unconditional ITCV divided by
   that impact (eq. 10).
+* `sens_surface()` returns the two-parameter sensitivity surface of which a
+  path is one slice, and `plot_sensitivity_surface()` draws it with shaded
+  zones, the null and significance boundaries, and optional benchmarks
+  (sensemakr formal bounds are added automatically). Surfaces are available
+  for partial R2 (Cinelli and Hazlett, 2020), ITCV (exact boundaries),
+  E-values (joint bounding factor of Ding and VanderWeele, 2016), and
+  Rosenbaum bounds (amplification of Rosenbaum and Silber, 2009, agreeing
+  with `sensitivitymv::amplify()`). Boundaries are computed in closed form
+  or by one-dimensional root finding.
 * `sens_table()` collects several `confoundsens` objects into one table:
   framework, meaning of the sensitivity parameter, the framework's own
   summary statistic, null and significance crossings, and the rule used.

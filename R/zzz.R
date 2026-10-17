@@ -20,6 +20,8 @@
 #'   \item Paths for matched pairs (Rosenbaum's sensitivity model):
 #'     [sens_path_pairs()].
 #'   \item Covariate benchmarks: [covariate_impacts()].
+#'   \item Two-parameter surfaces: [sens_surface()],
+#'     [plot_sensitivity_surface()].
 #'   \item Plots: [plot_robustness_curve()], [plot_sensitivity_love()],
 #'     [plot_sensitivity_contour()], [plot_local_taylor()].
 #'   \item Reporting: [robustness_points()], [sens_report()], and

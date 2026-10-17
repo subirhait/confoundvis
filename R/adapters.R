@@ -172,6 +172,8 @@ from_evalue <- function(x, lambda = seq(1, 5, by = 0.02)) {
       framework    = "evalue",
       source       = "EValue",
       estimate     = pt,
+      lower        = lo,
+      upper        = hi,
       evalue       = ev_pt,
       null         = 0,
       lambda_label = "Confounder risk ratio with treatment and outcome",

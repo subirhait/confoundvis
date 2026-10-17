@@ -25,6 +25,8 @@ Main entry points:
   \item Paths for matched pairs (Rosenbaum's sensitivity model):
     [sens_path_pairs()].
   \item Covariate benchmarks: [covariate_impacts()].
+  \item Two-parameter surfaces: [sens_surface()],
+    [plot_sensitivity_surface()].
   \item Plots: [plot_robustness_curve()], [plot_sensitivity_love()],
     [plot_sensitivity_contour()], [plot_local_taylor()].
   \item Reporting: [robustness_points()], [sens_report()], and
@@ -47,6 +49,11 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
+
+Authors:
+\itemize{
+  \item Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
+}
 
 }
 \keyword{internal}
