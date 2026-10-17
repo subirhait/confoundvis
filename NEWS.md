@@ -1,5 +1,17 @@
 # confoundvis 0.3.0
 
+## Scope
+
+* confoundvis is now a common interface to established sensitivity
+  analyses only. The illustration functions `fit_local_quadratic()`,
+  `plot_local_taylor()`, `plot_taylor_panels()`,
+  `plot_figure2_taylor_panels()`, `simulate_taylor_demo()`,
+  `plot_reversal_cone()`, and `plot_cone_comparison()` are removed. They did
+  not analyse data and did not correspond to any established framework.
+* The introductory vignette built on stylized paths is removed; the
+  workflow vignette covers every feature with real data.
+* 'grid' is no longer imported and 'gridExtra' is no longer suggested.
+
 ## New features
 
 * `sens_path_pairs()` computes a sensitivity path for matched-pair studies
@@ -83,7 +95,7 @@
   shipped but never executed by `R CMD check`.
 * `grid` is now declared in `Imports` (it was used via `grid::`).
 * `validate_confoundsens()` now checks that `lambda` is nondecreasing
-  *within* each level, so stacked multilevel paths no longer trigger a
+  *within* each level, so stacked subgroup paths no longer trigger a
   spurious warning.
 
 ## New features: from a fitted model to a report

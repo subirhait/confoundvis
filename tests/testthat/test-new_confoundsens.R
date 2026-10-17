@@ -14,11 +14,11 @@ test_that("new_confoundsens stores optional fields", {
     theta  = c(0.5, 0.4, 0.3, 0.2),
     se     = rep(0.05, 4),
     t      = c(3.1, 2.8, 2.4, 1.9),
-    level  = c("within", "within", "between", "between")
+    level  = c("female", "female", "male", "male")
   )
   expect_equal(x$se, rep(0.05, 4))
   expect_equal(x$t,  c(3.1, 2.8, 2.4, 1.9))
-  expect_equal(x$level, c("within", "within", "between", "between"))
+  expect_equal(x$level, c("female", "female", "male", "male"))
 })
 
 test_that("new_confoundsens coerces level to character", {

@@ -1,7 +1,7 @@
 Package: confoundvis
 Type: Package
-Title: Visualization Tools for Sensitivity Analysis of Unmeasured
-        Confounding
+Title: A Common Interface for Visualizing and Reporting Sensitivity
+    Analyses for Unmeasured Confounding
 Version: 0.3.0
 Authors@R: 
     person(
@@ -11,25 +11,27 @@ Authors@R:
       email = "haitsubi@msu.edu",
       comment = c(ORCID = "0009-0004-9871-9677")
     )
-Description: Visualization and reporting tools for sensitivity analysis to
-    unmeasured confounding in observational studies. A common
-    'confoundsens' object stores a sensitivity path (the treatment effect
-    as a function of hypothetical confounder strength) regardless of the
-    framework that produced it, so the same robustness curves, contour
-    plots, covariate benchmark ("sensitivity Love") plots, and plain-language
-    reports can be drawn for impact threshold analysis (Frank, 2000,
-    <doi:10.1177/0049124100029002001>), partial R-squared omitted-variable
-    bias analysis (Cinelli and Hazlett, 2020, <doi:10.1111/rssb.12348>),
-    and E-values (VanderWeele and Ding, 2017, <doi:10.7326/M16-2607>).
-    Paths can be computed directly from fitted linear models or converted
-    from results produced by the 'sensemakr', 'konfound', and 'EValue'
-    packages.
+Description: A common interface to established sensitivity analyses for
+    unmeasured confounding in observational studies. Results of impact
+    threshold and robustness of inference to replacement analysis (Frank,
+    2000, <doi:10.1177/0049124100029002001>; Frank et al., 2013,
+    <doi:10.3102/0162373713493129>), partial R-squared omitted-variable bias
+    analysis (Cinelli and Hazlett, 2020, <doi:10.1111/rssb.12348>), E-values
+    (VanderWeele and Ding, 2017, <doi:10.7326/M16-2607>), and Rosenbaum
+    bounds for matched pairs (Rosenbaum, 2002,
+    <doi:10.1007/978-1-4757-3692-2>) are stored in one object that keeps
+    each framework's own parameter. The same robustness curves, contour
+    plots, two-parameter surfaces, covariate benchmark plots, summary
+    tables, and plain-language reports then apply to all of them. Results
+    can be computed from fitted models or matched-pair differences, or
+    converted from the 'sensemakr', 'konfound', and 'EValue' packages, and
+    agree with those packages.
 License: GPL-3
 Encoding: UTF-8
 Language: en-US
 Depends: R (>= 4.1.0)
-Imports: ggplot2 (>= 3.4.0), rlang, graphics, grDevices, grid, stats
-Suggests: testthat (>= 3.0.0), knitr, rmarkdown, gridExtra, sensemakr,
+Imports: ggplot2 (>= 3.4.0), rlang, graphics, grDevices, stats
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown, sensemakr,
         konfound, EValue, DOS2, sensitivity2x2xk, sensitivitymv, ggrepel
 Config/testthat/edition: 3
 VignetteBuilder: knitr

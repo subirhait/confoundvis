@@ -60,10 +60,15 @@ the point (E-value, E-value). For Rosenbaum's model, \eqn{\Gamma =
 the significance boundary is the set of \eqn{(\Lambda, \Delta)} pairs that
 amplify the sensitivity value.
 
-The surface only evaluates each framework's formula. It does not
-summarize the shape of the path, and it reports no area or share of the
-plane: the size of a shaded zone depends on the chosen axis ranges and has
-no inferential meaning.
+Each surface is the two-parameter display that the source framework
+already uses: the partial-\eqn{R^2} surface is the plane of
+`sensemakr::ovb_contour_plot()`, the E-value surface is the curve of
+equivalent confounders shown by `EValue::bias_plot()`, and the Rosenbaum
+surface gives the pairs returned by `sensitivitymv::amplify()`. The ITCV
+surface plots the adjusted partial correlation of Frank (2000) over both
+correlations. The surface only evaluates these published formulas. It
+reports no area or share of the plane: the size of a shaded zone depends
+on the chosen axis ranges and has no inferential meaning.
 }
 \examples{
 fit <- lm(mpg ~ am + wt + hp, data = mtcars)

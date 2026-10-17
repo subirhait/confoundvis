@@ -7,7 +7,7 @@ test_that("print.confoundsens runs without error", {
 test_that("summary.confoundsens produces correct structure", {
   x   <- new_confoundsens(lambda = seq(0, 0.4, length.out = 10),
                           theta  = seq(1, 0.6, length.out = 10),
-                          level  = rep(c("within","between"), 5))
+                          level  = rep(c("female","male"), 5))
   s   <- summary(x)
   expect_s3_class(s, "summary.confoundsens")
   expect_s3_class(s$table, "data.frame")

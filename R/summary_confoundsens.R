@@ -15,7 +15,7 @@
 #'   lambda = seq(0, 0.2, length.out = 10),
 #'   theta  = seq(1, 0.6, length.out = 10),
 #'   se     = rep(0.08, 10),
-#'   level  = rep(c("within", "between"), length.out = 10)
+#'   level  = rep(c("female", "male"), length.out = 10)
 #' )
 #' summary(x)
 summary.confoundsens <- function(object, ...) {

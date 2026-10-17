@@ -9,8 +9,8 @@
 #'   Default `"lambda"`.
 #' @param theta Character string; name of the column containing theta values.
 #'   Default `"theta"`.
-#' @param level Optional character string; name of the column containing level
-#'   identifiers (e.g., `"within"` / `"between"`).
+#' @param level Optional character string; name of the column containing subgroup
+#'   (stratum) labels (e.g., `"female"` / `"male"`).
 #' @param se Optional character string; name of the column containing standard
 #'   errors for `theta`.
 #' @param t Optional character string; name of the column containing test
@@ -31,7 +31,7 @@
 #'   lambda = seq(0, 0.2, length.out = 10),
 #'   theta  = seq(1, 0.5, length.out = 10),
 #'   se     = rep(0.1, 10),
-#'   level  = rep(c("within", "between"), length.out = 10)
+#'   level  = rep(c("female", "male"), length.out = 10)
 #' )
 #' x <- as_confoundsens(df)
 #' x

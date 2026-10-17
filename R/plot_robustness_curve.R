@@ -26,7 +26,7 @@
 #'   lambda = seq(0, 0.2, length.out = 25),
 #'   theta  = 1 - 2 * seq(0, 0.2, length.out = 25),
 #'   se     = rep(0.05, 25),
-#'   level  = rep(c("within", "between"), length.out = 25)
+#'   level  = rep(c("female", "male"), length.out = 25)
 #' )
 #' plot_robustness_curve(x)
 #' plot_robustness_curve(x, bands = FALSE, facet_level = FALSE)

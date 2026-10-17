@@ -8,8 +8,8 @@
 #'   lambda or delta). Should be nondecreasing; a warning is issued otherwise.
 #' @param theta Numeric vector of effect estimates along the sensitivity path.
 #'   Must be the same length as `lambda`.
-#' @param level Optional character (or coercible) vector of level identifiers
-#'   (e.g., `"within"`, `"between"`). Must be the same length as `lambda`.
+#' @param level Optional character (or coercible) vector of subgroup (stratum) labels
+#'   (e.g., `"female"`, `"male"`). Must be the same length as `lambda`.
 #' @param se Optional numeric vector of standard errors for `theta`. Must be
 #'   the same length as `lambda`.
 #' @param t Optional numeric vector of test statistics along the path. Must be

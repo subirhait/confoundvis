@@ -1,98 +1,66 @@
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # confoundvis
 
 <!-- badges: start -->
-
-[![CRAN
-status](https://www.r-pkg.org/badges/version/confoundvis)](https://CRAN.R-project.org/package=confoundvis)
 [![R-CMD-check](https://github.com/subirhait/confoundvis/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/subirhait/confoundvis/actions/workflows/R-CMD-check.yaml)
-[![License:
-GPL-3](https://img.shields.io/badge/License-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
-`confoundvis` draws and reports sensitivity analyses for unmeasured
-confounding. A single `confoundsens` object stores a *sensitivity path*,
-the treatment estimate as a function of the strength of a hypothetical
-omitted confounder, whichever framework produced it. The same robustness
-curves, covariate benchmark plots, contour plots, and plain-language
-reports then work for:
+**confoundvis** is a common interface to established sensitivity analyses for
+unmeasured confounding. Each framework keeps its own parameter and its own
+published formula. confoundvis stores the results in one object, so the same
+plots, tables, and plain-language reports apply to all of them. It adds no new
+sensitivity parameter or measure.
 
-| Framework                            | Reference                         | Strength index                      | Path source                          |
-|--------------------------------------|-----------------------------------|-------------------------------------|--------------------------------------|
-| Impact threshold (ITCV)              | Frank (2000); Frank et al. (2013) | impact `r(D,U) x r(Y,U)`            | `itcv_lm()`, `from_konfound()`       |
-| Partial R-squared / robustness value | Cinelli & Hazlett (2020)          | partial R-squared of the confounder | `sens_path_lm()`, `from_sensemakr()` |
-| E-value                              | VanderWeele & Ding (2017)         | confounder risk ratio               | `from_evalue()`                      |
+| Framework | Source | confoundvis function | Agrees with |
+|---|---|---|---|
+| Partial R² / robustness value | Cinelli & Hazlett (2020) | `sens_path_lm()`, `from_sensemakr()` | `sensemakr` |
+| Impact threshold (ITCV) | Frank (2000) | `itcv_lm()`, `from_konfound()` | `konfound` |
+| Robustness of inference to replacement (RIR) | Frank et al. (2013) | `rir_lm()`, `from_konfound(index = "RIR")` | `konfound` |
+| E-value | VanderWeele & Ding (2017) | `from_evalue()` | `EValue` |
+| Rosenbaum bounds, matched pairs | Rosenbaum (2002) | `sens_path_pairs()` | `DOS2`, `sensitivity2x2xk`, `sensitivitymv` |
+
+Shared tools for every framework:
+
+| Function | Purpose |
+|---|---|
+| `robustness_points()` | Where the estimate reaches the null and where significance is lost |
+| `plot_robustness_curve()` | The adjusted estimate over the framework's parameter |
+| `sens_surface()`, `plot_sensitivity_surface()` | The framework's two-parameter plane with its boundaries |
+| `plot_sensitivity_contour()` | Exact ITCV boundary in the correlation plane |
+| `covariate_impacts()`, `plot_sensitivity_love()` | Benchmarks from measured covariates |
+| `sens_table()` | Several analyses side by side, each in its own units |
+| `sens_report()` | A plain-language summary |
 
 ## Installation
 
-``` r
+```r
 install.packages("confoundvis")
 # development version
-# pak::pak("subirhait/confoundvis")
+# install.packages("pak")
+pak::pak("subirhait/confoundvis")
 ```
 
-## Workflow
+## Example
 
-``` r
+```r
 library(confoundvis)
-fit <- lm(mpg ~ am + wt + hp + qsec, data = mtcars)
+data("darfur", package = "sensemakr")
+fit <- lm(peacefactor ~ directlyharmed + age + farmer_dar + herder_dar +
+            pastvoted + hhsize_darfur + female + village, data = darfur)
 
-# 1. sensitivity paths computed from the fitted model
-path <- sens_path_lm(fit, treatment = "am")    # partial R-squared
-it   <- itcv_lm(fit, treatment = "am")         # ITCV
+p_r2 <- sens_path_lm(fit, treatment = "directlyharmed")   # sensemakr's RV
+it   <- itcv_lm(fit, treatment = "directlyharmed")        # konfound's ITCV
+rr   <- rir_lm(fit, treatment = "directlyharmed")         # konfound's RIR
 
-# 2. plots
-plot_robustness_curve(path)
-plot_robustness_curve(it$path)
-
-# 3. benchmark against observed covariates
-imp <- covariate_impacts(fit, "am")
-plot_sensitivity_love(imp)
-plot_sensitivity_contour(attr(imp, "threshold"), benchmarks = imp)
-
-# 4. report
-sens_report(path)
+sens_table(partial_r2 = p_r2, itcv = it$path, rir = rr$path)
+plot_sensitivity_surface(sens_surface(p_r2))
+sens_report(p_r2)
 ```
 
-Results already produced by **sensemakr**, **konfound**, or **EValue**
-can be converted with `from_sensemakr()`, `from_konfound()`, and
-`from_evalue()`; `as_confoundsens()` also accepts a data frame of
-precomputed paths, including multilevel (within/between) paths.
+See `vignette("confoundvis-workflow")` for the full workflow, including
+E-values and matched pairs.
 
-See `vignette("confoundvis-workflow")` for a complete example with the
-public `darfur` data.
+## What confoundvis does not do
 
-## Scope
-
-`confoundvis` is a presentation layer. Its computations reproduce each
-framework’s published formulas (tests compare them with sensemakr,
-konfound, and EValue), and it inherits each framework’s assumptions. A
-sensitivity display shows how strong confounding would have to be; it
-cannot show whether such a confounder exists, and it cannot repair a
-flawed identification strategy. `plot_reversal_cone()` and
-`plot_taylor_panels()` are conceptual illustrations built on stylized
-models.
-
-## References
-
-Cinelli, C., & Hazlett, C. (2020). Making sense of sensitivity:
-Extending omitted variable bias. *JRSS-B*, 82(1), 39–67.
-
-Frank, K. A. (2000). Impact of a confounding variable on a regression
-coefficient. *Sociological Methods & Research*, 29(2), 147–194.
-
-Frank, K. A., Maroulis, S. J., Duong, M. Q., & Kelcey, B. M. (2013).
-What would it take to change an inference? *Educational Evaluation and
-Policy Analysis*, 35(4), 437–460.
-
-VanderWeele, T. J., & Ding, P. (2017). Sensitivity analysis in
-observational research: Introducing the E-value. *Annals of Internal
-Medicine*, 167(4), 268–274.
-
-## Citation
-
-``` r
-citation("confoundvis")
-```
+A sensitivity display shows how strong confounding would have to be to change
+a conclusion. It cannot show whether such a confounder exists, and it inherits
+the assumptions of the framework that produced it.

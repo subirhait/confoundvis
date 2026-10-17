@@ -198,6 +198,33 @@ plot_robustness_curve(p_gam, points = FALSE)
 The result agrees with `DOS2::senWilcox()`. For a binary outcome, use
 `method = "binary"`, which applies the exact bound for McNemar's statistic.
 
+## Two-parameter surfaces
+
+Each framework describes an omitted confounder with two parameters, one for
+its association with treatment and one for its association with the
+outcome. A path is one line through that plane. `sens_surface()` returns the
+whole plane with the boundaries at which the conclusion changes, computed
+from the framework's published formula. The partial $R^2$ surface is the
+plane of `sensemakr::ovb_contour_plot()`; benchmarks from
+`covariate_impacts()` are placed on it automatically.
+
+```{r surface-r2, fig.width = 6.5, fig.height = 5}
+s_r2 <- sens_surface(p_r2)
+s_r2
+plot_sensitivity_surface(s_r2, benchmarks = head(imp[order(-imp$impact), ], 4))
+```
+
+For a matched-pair study, the surface shows the amplification of $\Gamma$
+(Rosenbaum and Silber, 2009): every pair $(\Lambda, \Delta)$ on the solid
+curve corresponds to the sensitivity value, as in `sensitivitymv::amplify()`.
+
+```{r surface-pairs, eval = has_dos2, fig.width = 6.5, fig.height = 5}
+plot_sensitivity_surface(sens_surface(p_gam))
+```
+
+The size of a shaded zone depends on the axis ranges and carries no
+inferential meaning; the surface is read only through its boundaries.
+
 ## Several analyses in one table
 
 `sens_table()` collects the decision information of several paths, each in
@@ -227,10 +254,14 @@ the framework that generated a path. In particular:
   exact adjustment.
 * No display repairs a flawed identification strategy (for example, bad
   controls, selection, or measurement error in the treatment).
-* The geometric illustrations (`plot_reversal_cone()`, `plot_taylor_panels()`)
-  are conceptual tools built on stylized models and do not analyse data.
+* confoundvis adds no new sensitivity parameter or measure. Every number it
+  reports is the published quantity of the framework that produced it.
 
 ## References
+
+Rosenbaum, P. R., & Silber, J. H. (2009). Amplification of sensitivity
+analysis in matched observational studies. *Journal of the American
+Statistical Association*, 104(488), 1398–1405.
 
 Cinelli, C., & Hazlett, C. (2020). Making sense of sensitivity: Extending
 omitted variable bias. *Journal of the Royal Statistical Society: Series B*,
