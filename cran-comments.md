@@ -18,15 +18,16 @@ This is an update from confoundvis 0.2.0 to 0.3.0.
 ## Test environments
 
 * local Windows 11, R 4.6.0
-* win-builder R-devel and R-release
+* win-builder R-devel and R-release (R 4.6.1)
 * GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macos-latest,
   windows-latest
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
 
 ## Notes on possibly flagged items
 
-* "Possibly misspelled words": Cinelli, Hazlett, VanderWeele, Rosenbaum,
-  and konfound are author surnames or package names, not misspellings.
+* "Possibly misspelled words in DESCRIPTION": Cinelli, Hazlett,
+  VanderWeele, and Rosenbaum are author surnames; "et al" is part of a
+  citation; "framework's" is a possessive. None are misspellings.
