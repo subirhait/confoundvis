@@ -46,8 +46,10 @@
 #' the significance boundary is the set of \eqn{(\Lambda, \Delta)} pairs that
 #' amplify the sensitivity value.
 #'
-#' The surface only evaluates each framework's formula; it does not
-#' summarize the shape of the path.
+#' The surface only evaluates each framework's formula. It does not
+#' summarize the shape of the path, and it reports no area or share of the
+#' plane: the size of a shaded zone depends on the chosen axis ranges and has
+#' no inferential meaning.
 #'
 #' @param x A `confoundsens` object produced by [sens_path_lm()],
 #'   [from_sensemakr()], [itcv_lm()] (its `$path`), [from_konfound()] with
