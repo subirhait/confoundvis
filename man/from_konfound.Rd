@@ -45,7 +45,7 @@ from `beta_threshold` and `perc_bias_to_change`, and konfound's
 `RIR_primary` is carried in `meta$rir`; see [rir_lm()] for the path.
 }
 \examples{
-\dontshow{if (requireNamespace("konfound", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("konfound", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 k <- konfound::pkonfound(est_eff = 2, std_err = 0.4, n_obs = 100,
                          n_covariates = 3, index = "IT",
                          to_return = "raw_output")
