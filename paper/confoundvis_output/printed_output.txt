@@ -1,0 +1,80 @@
+    Estimate   Std. Error      t value     Pr(>|t|) 
+6.336115e-02 1.341526e-02 4.723064e+00 2.379256e-06 
+      n treated    rank      df 
+   5735    2184      74    5661 
+   level theta_start lambda_null lambda_sig     sig_rule
+1 pooled  0.06336115  0.06083428 0.03604828 t, df = 5660
+Sensitivity report (framework: partial_r2; source: lm)
+Treatment: RHC
+Estimate 0.0634 (SE 0.0134, df 5661); robustness value RV = 0.0608.
+Confounder strength (lambda): Confounder partial R2 with treatment and
+  outcome.
+Starting at 0.0634, the point estimate reaches the null at lambda =
+  0.0608; significance (alpha = 0.05) is lost at lambda = 0.036.
+These values describe how strong an omitted confounder would need to
+  be. They do not show whether such a confounder exists, and they rest
+  on the framework's own modelling assumptions. Judge plausibility
+  against substantive knowledge and observed benchmarks (see
+  covariate_impacts()).
+                 r             r_crit               itcv itcv_unconditional 
+        0.06265032         0.02604636         0.03758285         0.02877045 
+   level theta_start lambda_null lambda_sig        sig_rule
+1 pooled  0.06265032  0.06265031 0.03758285 theta threshold
+      estimate beta_threshold      perc_bias            rir          n_obs 
+  6.336115e-02   2.629906e-02   5.849340e+01   3.355000e+03   5.735000e+03 
+Sensitivity report (framework: rir; source: lm)
+Treatment: RHC
+Estimate 0.0634; threshold 0.0263. To nullify the inference, 58.49% of
+  the estimate would have to be due to bias: replacing 3355 of 5735
+  cases with cases for which the effect is zero (RIR = 3355).
+Sensitivity parameter (lambda): Proportion of cases replaced with
+  null-effect cases.
+Starting at 0.0634, the estimate falls to the threshold when a
+  proportion 0.585 of the cases is replaced.
+RIR describes how many cases would have to be replaced with cases in
+  which the treatment has no effect. It does not show that such cases
+  exist; judge plausibility against knowledge of the sample and design.
+sensemakr_theta   konfound_itcv    konfound_rir       rir_cases 
+              0               0               0               0 
+            point    lower    upper
+RR       1.102754 1.059514 1.147758
+E-values 1.439372 1.310622       NA
+   level theta_start lambda_null lambda_sig  sig_rule
+1 pooled  0.09781046    1.439372   1.310622 normal CI
+   covariate        r_du        r_yu       impact
+16  surv2md1 -0.08834258 -0.10178910  0.008992311
+19   wtkilo1  0.08423773 -0.06965977 -0.005867981
+64  dnr1_Yes -0.06639700  0.06598209 -0.004381013
+   covariate      r2dz.x     r2yz.dx      impact
+16  surv2md1 0.007804411 0.009240645 0.008525553
+19   wtkilo1 0.007095995 0.005594437 0.006323117
+64  dnr1_Yes 0.004408562 0.004914740 0.004665070
+<confoundsurf>
+  framework : partial_r2 
+  a (x-axis): Partial R2 of U with treatment [0, 0.1] 
+  b (y-axis): Partial R2 of U with outcome [0, 0.1] 
+  value     : Adjusted estimate 
+  boundaries: Null (point estimate = 0); Significance (alpha = 0.05); Significance, reversed direction (alpha = 0.05) 
+<confoundvis_table>
+ path       summary_name       summary_value lambda_null lambda_sig
+ partial_r2 RV (point null)    6.083e-02     0.06083     0.03605   
+ itcv       ITCV (conditional) 3.758e-02     0.06265     0.03758   
+ rir        RIR (cases)        3.355e+03     1.00000     0.58490   
+ evalue     E-value (point)    1.439e+00     1.43900     1.31100   
+
+Each row keeps its own sensitivity parameter (column `parameter`); lambda values are comparable only within a row.
+   level theta_start lambda_null lambda_sig        sig_rule
+1 pooled    4.535374          NA    3.86761 theta threshold
+Sensitivity report (framework: rosenbaum; source: pairs)
+Matched pairs: 39 (39 with nonzero difference); Wilcoxon signed rank
+  statistic = 715; sensitivity value Gamma = 3.87 (one-sided alpha =
+  0.05).
+Confounder strength (lambda): Gamma (odds of differential treatment
+  assignment).
+The upper-bound P-value reaches 0.05 at Gamma = 3.87; it stays below
+  0.5 for Gamma <= 6.
+These values describe how strong an omitted confounder would need to
+  be. They do not show whether such a confounder exists, and they rest
+  on the framework's own modelling assumptions. Judge plausibility
+  against substantive knowledge and, where available, observed
+  benchmarks.
