@@ -68,6 +68,11 @@ from_sensemakr <- function(x, lambda = seq(0, 0.5, by = 0.01), ratio = 1) {
 #'   `seq(0, 1, by = 0.001)` when not supplied).
 #' @param treatment Optional label for the treatment.
 #' @param index `"IT"` (default) or `"RIR"`.
+#' @param alpha The significance level used in the `konfound` call (konfound's
+#'   default is 0.05). It is recorded with the path so that
+#'   [robustness_points()] and [sens_report()] report the right level; it does
+#'   not change konfound's threshold. Use `NA` if the threshold was not set
+#'   from a significance level.
 #'
 #' @return A `confoundsens` object. For `index = "IT"` it is on the
 #'   correlation scale and `meta$itcv` holds the conditional ITCV (konfound's
@@ -85,7 +90,8 @@ from_sensemakr <- function(x, lambda = seq(0, 0.5, by = 0.01), ratio = 1) {
 #' rir <- from_konfound(k, index = "RIR")
 #' rir$meta$rir
 from_konfound <- function(x, dof = NULL, lambda = seq(0, 0.5, by = 0.01),
-                          treatment = NA_character_, index = c("IT", "RIR")) {
+                          treatment = NA_character_, index = c("IT", "RIR"),
+                          alpha = 0.05) {
   index <- match.arg(index)
   if (index == "RIR") {
     need <- c("beta_threshold", "perc_bias_to_change")
@@ -106,7 +112,7 @@ from_konfound <- function(x, dof = NULL, lambda = seq(0, 0.5, by = 0.01),
     }
     est <- bt / (1 - pb / 100)
     rir <- if (is.null(x$RIR_primary)) NA_real_ else as.numeric(x$RIR_primary)
-    return(.rir_core(est, bt, n_obs = NA_real_, lambda = lambda, alpha = NA_real_,
+    return(.rir_core(est, bt, n_obs = NA_real_, lambda = lambda, alpha = alpha,
                      source = "konfound", treatment = treatment, rir = rir))
   }
   if (!is.list(x) || !all(c("obs_r", "critical_r") %in% names(x)) ||
@@ -117,7 +123,7 @@ from_konfound <- function(x, dof = NULL, lambda = seq(0, 0.5, by = 0.01),
   }
   .check_lambda_unit(lambda)
   .itcv_core(r = as.numeric(x$obs_r), dof = if (is.null(dof)) NA_real_ else dof,
-             alpha = NA_real_, lambda = lambda, treatment = treatment,
+             alpha = alpha, lambda = lambda, treatment = treatment,
              source = "konfound", r_crit = as.numeric(x$critical_r))$path
 }
 

@@ -8,6 +8,8 @@
 #'
 #' @param df A data.frame with at least two columns:
 #'   * `covariate` — covariate names (character or factor).
+#'   * `label` — optional display labels; used in place of `covariate` when
+#'     present (as set by the `labels` argument of [covariate_impacts()]).
 #'   * `impact` — numeric impact values (e.g., ITCV product
 #'     \eqn{|r_{YU} \cdot r_{DU}|}, partial \eqn{R^2}, or other
 #'     confounding-strength metric).
@@ -63,7 +65,7 @@ plot_sensitivity_love <- function(df,
                  itcv       = "Impact r(D,Z|W) x r(Y,Z|W) (positive = reduces estimate)",
                  partial_r2 = "Bias index sqrt(R2yz.dx * R2dz.x / (1 - R2dz.x))",
                  "Confounding impact strength")
-  d$covariate <- as.character(d$covariate)
+  d$covariate <- as.character(if ("label" %in% names(d)) d$label else d$covariate)
 
   if (!is.null(top)) {
     if (!is.numeric(top) || length(top) != 1L || is.na(top) || top <= 0) {

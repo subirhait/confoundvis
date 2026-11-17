@@ -1,3 +1,45 @@
+# confoundvis 0.3.1
+
+## Bug fixes
+
+* `robustness_points()`, `sens_report()`, and `sens_table()` no longer
+  ignore `alpha` for paths whose threshold was fixed when they were built
+  (ITCV, RIR, and Rosenbaum paths). `alpha` now defaults to the stored
+  level; asking for a different level is an error that says how to rebuild
+  the path. Previously the stored threshold was used silently, and
+  `sens_report()` could print a level that was not the one used. The level
+  used is now returned in a new `alpha` column.
+* `from_konfound()` gains an `alpha` argument (default 0.05, konfound's
+  default) so imported paths record their level.
+* `rir_lm()` with a substantive `threshold` records no significance level.
+
+## New features
+
+* `sens_profile()` runs the partial R2, ITCV, and RIR analyses for one
+  coefficient in one call, adds any further paths (for example an E-value
+  or Rosenbaum path), and returns an object that prints as a side-by-side
+  table and plots as one figure with one panel per analysis.
+* `covariate_impacts()` gains a `labels` argument for readable covariate
+  names, used by `plot_sensitivity_love()`, `plot_sensitivity_contour()`,
+  and `plot_sensitivity_surface()`.
+
+## Performance
+
+* `covariate_impacts()` computes every benchmark from one cross-product
+  matrix instead of refitting the model for each term. With one million
+  observations and 20 covariates it now takes about 5 seconds instead of
+  more than 3 minutes. Results agree with the previous version to within
+  rounding error; for an exactly aliased term the correlations are now 0
+  rather than `NA`.
+
+## Documentation
+
+* Native functions given a `glm` fit now explain how to analyse it with
+  'konfound' and `from_konfound()` (RIR for logistic regression) or with
+  'EValue' and `from_evalue()`.
+* `covariate_impacts()` documents how factors, ordered factors, and
+  separately entered dummy variables are benchmarked.
+
 # confoundvis 0.3.0
 
 ## Scope

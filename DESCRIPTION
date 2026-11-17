@@ -2,7 +2,7 @@ Package: confoundvis
 Type: Package
 Title: A Common Interface for Visualizing and Reporting Sensitivity
     Analyses for Unmeasured Confounding
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: 
     person(
       given = "Subir",

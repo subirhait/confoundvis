@@ -9,7 +9,8 @@ from_konfound(
   dof = NULL,
   lambda = seq(0, 0.5, by = 0.01),
   treatment = NA_character_,
-  index = c("IT", "RIR")
+  index = c("IT", "RIR"),
+  alpha = 0.05
 )
 }
 \arguments{
@@ -26,6 +27,12 @@ of replacement proportions in \[0, 1\] for `index = "RIR"` (default
 \item{treatment}{Optional label for the treatment.}
 
 \item{index}{`"IT"` (default) or `"RIR"`.}
+
+\item{alpha}{The significance level used in the `konfound` call (konfound's
+default is 0.05). It is recorded with the path so that
+[robustness_points()] and [sens_report()] report the right level; it does
+not change konfound's threshold. Use `NA` if the threshold was not set
+from a significance level.}
 }
 \value{
 A `confoundsens` object. For `index = "IT"` it is on the
@@ -45,7 +52,7 @@ from `beta_threshold` and `perc_bias_to_change`, and konfound's
 `RIR_primary` is carried in `meta$rir`; see [rir_lm()] for the path.
 }
 \examples{
-\dontshow{if (requireNamespace("konfound", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+\dontshow{if (requireNamespace("konfound", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 k <- konfound::pkonfound(est_eff = 2, std_err = 0.4, n_obs = 100,
                          n_covariates = 3, index = "IT",
                          to_return = "raw_output")

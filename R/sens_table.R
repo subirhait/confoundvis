@@ -28,14 +28,16 @@
 #'
 #' @param ... `confoundsens` objects, or a single list of them. Names (from
 #'   `name = object` arguments or list names) are used as row labels.
-#' @param alpha Two-sided significance level passed to [robustness_points()]
-#'   for paths without a stored threshold. Paths with a stored threshold
-#'   (ITCV, Rosenbaum) use the level they were built with.
+#' @param alpha Significance level passed to [robustness_points()] for paths
+#'   without a stored threshold (default 0.05). Paths with a stored threshold
+#'   (ITCV, RIR, Rosenbaum) always use the level they were built with, which
+#'   is shown in column `alpha`; supply `alpha = NULL` (default) when the
+#'   table mixes such paths built at different levels.
 #'
 #' @return A data frame of class `confoundvis_table` with columns `path`,
 #'   `level`, `framework`, `source`, `parameter` (meaning of lambda),
 #'   `summary_name`, `summary_value`, `theta_start`, `lambda_null`,
-#'   `lambda_sig`, and `sig_rule`. It prints with a reminder that rows use
+#'   `lambda_sig`, `sig_rule`, and `alpha`. It prints with a reminder that rows use
 #'   different scales.
 #' @seealso [robustness_points()], [sens_report()]
 #' @export
@@ -45,7 +47,7 @@
 #' g <- seq(0, 0.9, by = 0.001)
 #' sens_table(partial_r2 = sens_path_lm(fit, "wt", lambda = g),
 #'            itcv       = itcv_lm(fit, "wt", lambda = g)$path)
-sens_table <- function(..., alpha = 0.05) {
+sens_table <- function(..., alpha = NULL) {
   paths <- list(...)
   if (length(paths) == 1L && is.list(paths[[1L]]) &&
       !inherits(paths[[1L]], "confoundsens")) {
@@ -65,7 +67,7 @@ sens_table <- function(..., alpha = 0.05) {
   rows <- lapply(seq_along(paths), function(i) {
     x  <- validate_confoundsens(paths[[i]])
     m  <- x$meta
-    rp <- robustness_points(x, alpha = alpha)
+    rp <- robustness_points(x, alpha = if (is.null(m$threshold)) alpha else NULL)
     fs <- .framework_summary(m)
     data.frame(
       path          = nm[i],
@@ -79,6 +81,7 @@ sens_table <- function(..., alpha = 0.05) {
       lambda_null   = rp$lambda_null,
       lambda_sig    = rp$lambda_sig,
       sig_rule      = rp$sig_rule,
+      alpha         = rp$alpha,
       stringsAsFactors = FALSE
     )
   })

@@ -10,7 +10,15 @@
 
 # Internal: pull the pieces we need from an lm fit.
 .lm_parts <- function(model, treatment) {
-  if (!inherits(model, "lm") || inherits(model, "glm") || inherits(model, "mlm")) {
+  if (inherits(model, "glm")) {
+    stop("The native functions accept models fitted by stats::lm() only. ",
+         "For a generalized linear model (for example, logistic regression), ",
+         "run konfound::konfound(model, <treatment>, index = \"RIR\", ",
+         "to_return = \"raw_output\") and convert the result with ",
+         "from_konfound(..., index = \"RIR\"); for E-values, use the EValue ",
+         "package and from_evalue().", call. = FALSE)
+  }
+  if (!inherits(model, "lm") || inherits(model, "mlm")) {
     stop("`model` must be a single-outcome linear model fitted by stats::lm().",
          call. = FALSE)
   }
@@ -326,6 +334,21 @@ itcv_lm <- function(model, treatment, alpha = 0.05,
 #' @param metric Which metric populates the `impact` column used by
 #'   [plot_sensitivity_love()]: `"itcv"` (default) or `"partial_r2"`.
 #' @param alpha Two-sided significance level used for the ITCV threshold.
+#' @param labels Optional named character vector of display labels, for
+#'   example `c(surv2md1 = "Estimated 2-month survival")`. Names are model
+#'   term labels. The labels fill the `label` column, which the plotting
+#'   functions show in place of the term names; terms without a label keep
+#'   their name.
+#'
+#' @details Each model term is removed as a whole. A factor entered as one
+#'   term (for example `factor(region)`) is therefore benchmarked jointly:
+#'   its partial \eqn{R^2} values and bias index use all of its columns,
+#'   while the ITCV correlations, which need a single signed column, are
+#'   `NA`. An ordered factor is also treated as one term, through all of its
+#'   contrasts, so its ordering does not change the benchmark. To use the
+#'   ordering, enter a numeric score instead (one column). Dummy variables
+#'   entered separately, as in a pre-expanded data set, are benchmarked one
+#'   at a time, each against its omitted category.
 #'
 #' @return A data frame with one row per covariate term and columns
 #'   `covariate`, `term_df`, `r_du`, `r_yu`, `itcv_impact`, `r_du_zero`,
@@ -352,8 +375,11 @@ itcv_lm <- function(model, treatment, alpha = 0.05,
 #' plot_sensitivity_love(imp)
 covariate_impacts <- function(model, treatment,
                               metric = c("itcv", "partial_r2"),
-                              alpha  = 0.05) {
+                              alpha  = 0.05, labels = NULL) {
   metric <- match.arg(metric)
+  if (!is.null(labels) && (!is.character(labels) || is.null(names(labels)))) {
+    stop("`labels` must be a named character vector.", call. = FALSE)
+  }
   pr <- .lm_parts(model, treatment)
   X  <- pr$X
   y  <- pr$y
@@ -368,28 +394,55 @@ covariate_impacts <- function(model, treatment,
     stop("The model has no covariate terms besides the treatment.", call. = FALSE)
   }
 
+  # All regressions below share the same columns, so they are computed from
+  # one cross-product matrix of the (centred) outcome, treatment, and
+  # covariates instead of refitting the model for every term. With an
+  # intercept, centring removes it from every regression; columns are also
+  # scaled, which leaves every R^2 and coefficient sign unchanged.
   has_int <- any(pr$assign == 0L)
-  int_col <- pr$X[, pr$assign == 0L, drop = FALSE]
-  tss <- function(v) if (has_int) .rss(v, int_col) else sum(v^2)
-  rss_d_full <- .rss(D, W)
-  rss_y_full <- .rss(y, cbind(D, W))
-  rss_yw_full <- .rss(y, W)
+  keepW <- asg_W != 0L
+  Wn <- W[, keepW, drop = FALSE]
+  asg_Wn <- asg_W[keepW]
+  Z <- cbind(y, D, Wn)
+  if (has_int) Z <- sweep(Z, 2L, colMeans(Z))
+  sc <- sqrt(colSums(Z^2) / nrow(Z))
+  sc[!is.finite(sc) | sc == 0] <- 1
+  Z <- sweep(Z, 2L, sc, "/")
+  G <- crossprod(Z)
+  iy <- 1L; iD <- 2L; iW <- seq_len(ncol(Wn)) + 2L
+  .g_coef <- function(t, M) {
+    q <- qr(G[M, M, drop = FALSE], tol = 1e-10)
+    b <- qr.coef(q, G[M, t])
+    b[is.na(b)] <- 0
+    b
+  }
+  .g_rss <- function(t, M) {
+    if (length(M) == 0L) return(G[t, t])
+    G[t, t] - sum(G[t, M] * .g_coef(t, M))
+  }
+  .g_cf <- function(t, M, j) .g_coef(t, M)[match(j, M)]
+  tss <- function(t) G[t, t]
+  rss_d_full  <- .g_rss(iD, iW)
+  rss_y_full  <- .g_rss(iy, c(iD, iW))
+  rss_yw_full <- .g_rss(iy, iW)
 
   rows <- lapply(term_ids, function(k) {
-    cols  <- which(asg_W == k)
-    W_mk  <- W[, -cols, drop = FALSE]
-    r2dz  <- (.rss(D, W_mk) - rss_d_full) / .rss(D, W_mk)
-    r2yz  <- (.rss(y, cbind(D, W_mk)) - rss_y_full) / .rss(y, cbind(D, W_mk))
-    r2yzw <- (.rss(y, W_mk) - rss_yw_full) / .rss(y, W_mk)
+    cols  <- iW[asg_Wn == k]
+    W_mk  <- setdiff(iW, cols)
+    rss_d <- .g_rss(iD, W_mk)
+    rss_y <- .g_rss(iy, c(iD, W_mk))
+    rss_yw <- .g_rss(iy, W_mk)
+    r2dz  <- (rss_d - rss_d_full) / rss_d
+    r2yz  <- (rss_y - rss_y_full) / rss_y
+    r2yzw <- (rss_yw - rss_yw_full) / rss_yw
     if (length(cols) == 1L) {
-      r_du <- sign(.coef_col(D, W, cols)) * sqrt(max(r2dz, 0))
-      r_yu <- sign(.coef_col(y, W, cols)) * sqrt(max(r2yzw, 0))
+      r_du <- sign(.g_cf(iD, iW, cols)) * sqrt(max(r2dz, 0))
+      r_yu <- sign(.g_cf(iy, iW, cols)) * sqrt(max(r2yzw, 0))
       # zero-order (unadjusted) correlations of the term with D and Y
-      zc <- cbind(int_col, W[, cols, drop = FALSE])
-      r_du0 <- sign(.coef_col(D, zc, ncol(zc))) *
-        sqrt(max(1 - .rss(D, zc) / tss(D), 0))
-      r_yu0 <- sign(.coef_col(y, zc, ncol(zc))) *
-        sqrt(max(1 - .rss(y, zc) / tss(y), 0))
+      r_du0 <- sign(.g_cf(iD, cols, cols)) *
+        sqrt(max(1 - .g_rss(iD, cols) / tss(iD), 0))
+      r_yu0 <- sign(.g_cf(iy, cols, cols)) *
+        sqrt(max(1 - .g_rss(iy, cols) / tss(iy), 0))
     } else {
       r_du <- r_yu <- r_du0 <- r_yu0 <- NA_real_
     }
@@ -423,6 +476,10 @@ covariate_impacts <- function(model, treatment,
                            itcv_u / out$impact_zero, NA_real_)
   out$impact <- if (metric == "itcv") out$itcv_impact else out$bias_index
   out$label  <- out$covariate
+  if (!is.null(labels)) {
+    hit <- out$covariate %in% names(labels)
+    out$label[hit] <- unname(labels[out$covariate[hit]])
+  }
   rownames(out) <- NULL
   if (metric == "itcv" && anyNA(out$impact)) {
     message("Multi-column terms have no ITCV impact (NA); ",

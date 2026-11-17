@@ -4,12 +4,20 @@
 \alias{sens_report}
 \title{Plain-language sensitivity report}
 \usage{
-sens_report(x, alpha = 0.05, digits = 3)
+sens_report(x, alpha = NULL, digits = 3)
 }
 \arguments{
-\item{x}{A `confoundsens` object.}
+\item{x}{A `confoundsens` object.
+Paths with a stored threshold (ITCV, RIR, and Rosenbaum paths) fix the
+significance level when they are built, because the threshold is computed
+from it. For these paths `alpha` defaults to the stored level. Asking for a
+different level is an error: rebuild the path at the new level instead
+(for example `itcv_lm(model, treatment, alpha = 0.01)`). For other paths the
+default is 0.05. The level actually used is returned in column `alpha`.}
 
-\item{alpha}{Two-sided significance level.}
+\item{alpha}{Significance level, or `NULL` (default) to use the level
+stored in the path, if any, and 0.05 otherwise. Two-sided, except for
+Rosenbaum paths, which use the one-sided level of Rosenbaum's test.}
 
 \item{digits}{Number of significant digits.}
 }

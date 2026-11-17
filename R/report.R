@@ -11,6 +11,41 @@
     (g[i] - g[i - 1L])
 }
 
+# Internal: the significance level a path is evaluated at. Paths with a
+# stored threshold carry the level it was computed from; a different
+# requested level is refused rather than silently ignored.
+.resolve_alpha <- function(meta, alpha) {
+  if (!is.null(alpha) &&
+      (!is.numeric(alpha) || length(alpha) != 1L || is.na(alpha) ||
+       alpha <= 0 || alpha >= 1)) {
+    stop("`alpha` must be NULL or a single number in (0, 1).", call. = FALSE)
+  }
+  if (is.null(meta$threshold)) return(if (is.null(alpha)) 0.05 else alpha)
+  stored <- if (is.null(meta$alpha)) NA_real_ else as.numeric(meta$alpha)
+  if (is.null(alpha)) return(stored)
+  if (is.na(stored)) {
+    warning("This path has a fixed threshold that was not built from a ",
+            "significance level (substantive threshold or imported without a ",
+            "level); `alpha` is ignored.", call. = FALSE)
+    return(NA_real_)
+  }
+  if (abs(alpha - stored) > 1e-12) {
+    fw <- if (is.null(meta$framework)) "" else meta$framework
+    how <- switch(fw,
+      itcv      = "itcv_lm(..., alpha = %s) or from_konfound(..., alpha = %s)",
+      rir       = "rir_lm(..., alpha = %s) or from_konfound(..., alpha = %s)",
+      rosenbaum = "sens_path_pairs(..., alpha = %s)%s",
+      "the function that created it with alpha = %s%s")
+    how <- if (fw == "rosenbaum" || !fw %in% c("itcv", "rir"))
+      sprintf(how, alpha, "") else sprintf(how, alpha, alpha)
+    stop(sprintf(paste0(
+      "This %s path was built with alpha = %s, and its threshold is fixed at ",
+      "that level. Rebuild it at alpha = %s with %s."),
+      if (fw == "") "sensitivity" else fw, stored, alpha, how), call. = FALSE)
+  }
+  stored
+}
+
 
 #' Locate robustness thresholds along a sensitivity path
 #'
@@ -29,22 +64,32 @@
 #' of freedom (normal critical value).
 #'
 #' @param x A `confoundsens` object.
-#' @param alpha Two-sided significance level.
+#' Paths with a stored threshold (ITCV, RIR, and Rosenbaum paths) fix the
+#' significance level when they are built, because the threshold is computed
+#' from it. For these paths `alpha` defaults to the stored level. Asking for a
+#' different level is an error: rebuild the path at the new level instead
+#' (for example `itcv_lm(model, treatment, alpha = 0.01)`). For other paths the
+#' default is 0.05. The level actually used is returned in column `alpha`.
+#'
+#' @param alpha Significance level, or `NULL` (default) to use the level
+#'   stored in the path, if any, and 0.05 otherwise. Two-sided, except for
+#'   Rosenbaum paths, which use the one-sided level of Rosenbaum's test.
 #'
 #' @return A data frame with columns `level`, `theta_start`, `lambda_null`,
-#'   `lambda_sig`, and `sig_rule`. `NA` means the crossing is not reached
-#'   within the supplied `lambda` range.
+#'   `lambda_sig`, `sig_rule`, and `alpha`. `NA` means the crossing is not
+#'   reached within the supplied `lambda` range.
 #' @export
 #'
 #' @examples
 #' fit <- lm(mpg ~ am + wt + hp, data = mtcars)
 #' robustness_points(sens_path_lm(fit, "am", lambda = seq(0, 0.9, by = 0.001)))
-robustness_points <- function(x, alpha = 0.05) {
+robustness_points <- function(x, alpha = NULL) {
   if (!inherits(x, "confoundsens")) {
     stop("`x` must be an object of class 'confoundsens'.", call. = FALSE)
   }
   x <- validate_confoundsens(x)
   meta <- x$meta
+  alpha <- .resolve_alpha(meta, alpha)
   null <- if (is.null(meta$null)) 0 else meta$null
   lev  <- if (is.null(x$level)) rep("pooled", length(x$lambda)) else x$level
 
@@ -79,7 +124,7 @@ robustness_points <- function(x, alpha = 0.05) {
       rule <- "normal t"
     }
     data.frame(level = L, theta_start = th[1L], lambda_null = lam_null,
-               lambda_sig = lam_sig, sig_rule = rule,
+               lambda_sig = lam_sig, sig_rule = rule, alpha = alpha,
                stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, res)
@@ -107,8 +152,9 @@ robustness_points <- function(x, alpha = 0.05) {
 #' @examples
 #' fit <- lm(mpg ~ am + wt + hp, data = mtcars)
 #' sens_report(sens_path_lm(fit, "am", lambda = seq(0, 0.9, by = 0.001)))
-sens_report <- function(x, alpha = 0.05, digits = 3) {
+sens_report <- function(x, alpha = NULL, digits = 3) {
   pts  <- robustness_points(x, alpha = alpha)
+  alpha <- pts$alpha[1L]
   meta <- x$meta
   fmt  <- function(v) formatC(v, digits = digits, format = "g")
   lam_lab <- if (is.null(meta$lambda_label)) "lambda" else meta$lambda_label
@@ -173,7 +219,7 @@ sens_report <- function(x, alpha = 0.05, digits = 3) {
       next
     }
     if (fw == "rosenbaum") {
-      a1 <- if (is.null(meta$alpha)) alpha else meta$alpha
+      a1 <- alpha
       r1 <- if (is.na(p$lambda_sig))
         sprintf("The upper-bound P-value stays below %s for Gamma <= %s", a1, fmt(max_l))
       else if (p$lambda_sig <= min(x$lambda))

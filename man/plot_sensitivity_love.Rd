@@ -14,6 +14,8 @@ plot_sensitivity_love(
 \arguments{
 \item{df}{A data.frame with at least two columns:
 * `covariate` — covariate names (character or factor).
+* `label` — optional display labels; used in place of `covariate` when
+  present (as set by the `labels` argument of [covariate_impacts()]).
 * `impact` — numeric impact values (e.g., ITCV product
   \eqn{|r_{YU} \cdot r_{DU}|}, partial \eqn{R^2}, or other
   confounding-strength metric).}

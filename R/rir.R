@@ -112,7 +112,8 @@ rir_lm <- function(model, treatment, alpha = 0.05,
     }
     sign(pr$est) * abs(threshold)
   }
-  path <- .rir_core(pr$est, beta_thr, n_obs, lambda, alpha,
+  path <- .rir_core(pr$est, beta_thr, n_obs, lambda,
+                    alpha = if (is.null(threshold)) alpha else NA_real_,
                     source = "lm", treatment = treatment)
   m <- path$meta
   list(estimate = pr$est, beta_threshold = beta_thr, perc_bias = m$perc_bias,

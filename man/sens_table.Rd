@@ -4,21 +4,23 @@
 \alias{sens_table}
 \title{Summarize several sensitivity paths in one table}
 \usage{
-sens_table(..., alpha = 0.05)
+sens_table(..., alpha = NULL)
 }
 \arguments{
 \item{...}{`confoundsens` objects, or a single list of them. Names (from
 `name = object` arguments or list names) are used as row labels.}
 
-\item{alpha}{Two-sided significance level passed to [robustness_points()]
-for paths without a stored threshold. Paths with a stored threshold
-(ITCV, Rosenbaum) use the level they were built with.}
+\item{alpha}{Significance level passed to [robustness_points()] for paths
+without a stored threshold (default 0.05). Paths with a stored threshold
+(ITCV, RIR, Rosenbaum) always use the level they were built with, which
+is shown in column `alpha`; supply `alpha = NULL` (default) when the
+table mixes such paths built at different levels.}
 }
 \value{
 A data frame of class `confoundvis_table` with columns `path`,
   `level`, `framework`, `source`, `parameter` (meaning of lambda),
   `summary_name`, `summary_value`, `theta_start`, `lambda_null`,
-  `lambda_sig`, and `sig_rule`. It prints with a reminder that rows use
+  `lambda_sig`, `sig_rule`, and `alpha`. It prints with a reminder that rows use
   different scales.
 }
 \description{

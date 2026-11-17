@@ -8,7 +8,8 @@ covariate_impacts(
   model,
   treatment,
   metric = c("itcv", "partial_r2"),
-  alpha = 0.05
+  alpha = 0.05,
+  labels = NULL
 )
 }
 \arguments{
@@ -20,6 +21,12 @@ covariate_impacts(
 [plot_sensitivity_love()]: `"itcv"` (default) or `"partial_r2"`.}
 
 \item{alpha}{Two-sided significance level used for the ITCV threshold.}
+
+\item{labels}{Optional named character vector of display labels, for
+example `c(surv2md1 = "Estimated 2-month survival")`. Names are model
+term labels. The labels fill the `label` column, which the plotting
+functions show in place of the term names; terms without a label keep
+their name.}
 }
 \value{
 A data frame with one row per covariate term and columns
@@ -67,6 +74,16 @@ The returned data frame carries an attribute `threshold` for the selected
 Covariate benchmarks describe *observed* variables. Whether an unobserved
 confounder could be as strong as a given covariate is a substantive
 judgment that no benchmark can settle.
+
+Each model term is removed as a whole. A factor entered as one
+  term (for example `factor(region)`) is therefore benchmarked jointly:
+  its partial \eqn{R^2} values and bias index use all of its columns,
+  while the ITCV correlations, which need a single signed column, are
+  `NA`. An ordered factor is also treated as one term, through all of its
+  contrasts, so its ordering does not change the benchmark. To use the
+  ordering, enter a numeric score instead (one column). Dummy variables
+  entered separately, as in a pre-expanded data set, are benchmarked one
+  at a time, each against its omitted category.
 }
 \examples{
 fit <- lm(mpg ~ am + wt + hp + qsec, data = mtcars)
