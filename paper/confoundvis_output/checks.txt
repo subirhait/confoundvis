@@ -5,6 +5,7 @@ itcv_vs_konfound TRUE
 itcvu_vs_konfound TRUE
 rir_vs_konfound TRUE
 paths_identical TRUE
+profile_matches TRUE
 evalue_null TRUE
 evalue_ci TRUE
 surface_r2_diag TRUE
@@ -12,6 +13,9 @@ surface_ev_null TRUE
 wilcox_vs_DOS2 TRUE
 binary_vs_mh TRUE
 amplify_vs_smv TRUE
+logit_vs_konfound TRUE
+alpha_refused TRUE
+alpha_rebuilt TRUE
 darfur_rv TRUE
 darfur_rvqa TRUE
 darfur_itcv TRUE

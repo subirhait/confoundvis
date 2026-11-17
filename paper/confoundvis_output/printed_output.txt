@@ -1,9 +1,7 @@
     Estimate   Std. Error      t value     Pr(>|t|) 
 6.336115e-02 1.341526e-02 4.723064e+00 2.379256e-06 
-      n treated    rank      df 
-   5735    2184      74    5661 
-   level theta_start lambda_null lambda_sig     sig_rule
-1 pooled  0.06336115  0.06083428 0.03604828 t, df = 5660
+   level theta_start lambda_null lambda_sig     sig_rule alpha
+1 pooled  0.06336115  0.06083428 0.03604828 t, df = 5660  0.05
 Sensitivity report (framework: partial_r2; source: lm)
 Treatment: RHC
 Estimate 0.0634 (SE 0.0134, df 5661); robustness value RV = 0.0608.
@@ -18,53 +16,67 @@ These values describe how strong an omitted confounder would need to
   covariate_impacts()).
                  r             r_crit               itcv itcv_unconditional 
         0.06265032         0.02604636         0.03758285         0.02877045 
-   level theta_start lambda_null lambda_sig        sig_rule
-1 pooled  0.06265032  0.06265031 0.03758285 theta threshold
+   level theta_start lambda_null lambda_sig        sig_rule alpha
+1 pooled  0.06265032  0.06265031 0.03758285 theta threshold  0.05
       estimate beta_threshold      perc_bias            rir          n_obs 
   6.336115e-02   2.629906e-02   5.849340e+01   3.355000e+03   5.735000e+03 
-Sensitivity report (framework: rir; source: lm)
-Treatment: RHC
-Estimate 0.0634; threshold 0.0263. To nullify the inference, 58.49% of
-  the estimate would have to be due to bias: replacing 3355 of 5735
-  cases with cases for which the effect is zero (RIR = 3355).
-Sensitivity parameter (lambda): Proportion of cases replaced with
-  null-effect cases.
-Starting at 0.0634, the estimate falls to the threshold when a
-  proportion 0.585 of the cases is replaced.
-RIR describes how many cases would have to be replaced with cases in
-  which the treatment has no effect. It does not show that such cases
-  exist; judge plausibility against knowledge of the sample and design.
 sensemakr_theta   konfound_itcv    konfound_rir       rir_cases 
               0               0               0               0 
             point    lower    upper
 RR       1.102754 1.059514 1.147758
 E-values 1.439372 1.310622       NA
-   level theta_start lambda_null lambda_sig  sig_rule
-1 pooled  0.09781046    1.439372   1.310622 normal CI
-   covariate        r_du        r_yu       impact
-16  surv2md1 -0.08834258 -0.10178910  0.008992311
-19   wtkilo1  0.08423773 -0.06965977 -0.005867981
-64  dnr1_Yes -0.06639700  0.06598209 -0.004381013
-   covariate      r2dz.x     r2yz.dx      impact
-16  surv2md1 0.007804411 0.009240645 0.008525553
-19   wtkilo1 0.007095995 0.005594437 0.006323117
-64  dnr1_Yes 0.004408562 0.004914740 0.004665070
+   level theta_start lambda_null lambda_sig  sig_rule alpha
+1 pooled  0.09781046    1.439372   1.310622 normal CI  0.05
+<confoundvis_profile> treatment: RHC; 4 analyses
+
+<confoundvis_table>
+ path       summary_name       summary_value lambda_null lambda_sig alpha
+ partial_r2 RV (point null)    6.083e-02     0.06083     0.03605    0.05 
+ itcv       ITCV (conditional) 3.758e-02     0.06265     0.03758    0.05 
+ rir        RIR (cases)        3.355e+03     1.00000     0.58490    0.05 
+ evalue     E-value (point)    1.439e+00     1.43900     1.31100    0.05 
+
+Each row keeps its own sensitivity parameter (column `parameter`); lambda values are comparable only within a row.
+                             label        r_du        r_yu       impact
+16      Estimated 2-month survival -0.08834258 -0.10178910  0.008992311
+19                     Weight (kg)  0.08423773 -0.06965977 -0.005867981
+64 Do-not-resuscitate order, day 1 -0.06639700  0.06598209 -0.004381013
+                             label      r2dz.x     r2yz.dx      impact
+16      Estimated 2-month survival 0.007804411 0.009240645 0.008525553
+19                     Weight (kg) 0.007095995 0.005594437 0.006323117
+64 Do-not-resuscitate order, day 1 0.004408562 0.004914740 0.004665070
+       covariate term_df          r_du        r_yu       r2dz.x      r2yz.dx
+51       income3       1  0.0009294204 -0.02977170 8.638223e-07 0.0008933226
+52       income1       1 -0.0066278485 -0.02337593 4.392838e-05 0.0005292614
+53       income2       1  0.0078694219 -0.03690989 6.192780e-05 0.0014043201
+70        income       3            NA          NA 1.595852e-04 0.0017674026
+701 income_score       1  0.0038711015 -0.04022391 1.498543e-05 0.0016438873
+      bias_index
+51  0.0000277790
+52  0.0001524815
+53  0.0002949099
+70  0.0005311274
+701 0.0001569545
 <confoundsurf>
   framework : partial_r2 
   a (x-axis): Partial R2 of U with treatment [0, 0.1] 
   b (y-axis): Partial R2 of U with outcome [0, 0.1] 
   value     : Adjusted estimate 
   boundaries: Null (point estimate = 0); Significance (alpha = 0.05); Significance, reversed direction (alpha = 0.05) 
-<confoundvis_table>
- path       summary_name       summary_value lambda_null lambda_sig
- partial_r2 RV (point null)    6.083e-02     0.06083     0.03605   
- itcv       ITCV (conditional) 3.758e-02     0.06265     0.03758   
- rir        RIR (cases)        3.355e+03     1.00000     0.58490   
- evalue     E-value (point)    1.439e+00     1.43900     1.31100   
-
-Each row keeps its own sensitivity parameter (column `parameter`); lambda values are comparable only within a row.
-   level theta_start lambda_null lambda_sig        sig_rule
-1 pooled    4.535374          NA    3.86761 theta threshold
+Sensitivity report (framework: rir; source: konfound)
+Treatment: RHC
+Estimate 0.365; threshold 0.149. To nullify the inference, 59.19% of
+  the estimate would have to be due to bias (RIR = 3395 cases replaced
+  with null-effect cases).
+Sensitivity parameter (lambda): Proportion of cases replaced with
+  null-effect cases.
+Starting at 0.365, the estimate falls to the threshold when a
+  proportion 0.592 of the cases is replaced.
+RIR describes how many cases would have to be replaced with cases in
+  which the treatment has no effect. It does not show that such cases
+  exist; judge plausibility against knowledge of the sample and design.
+   level theta_start lambda_null lambda_sig        sig_rule alpha
+1 pooled    4.535374          NA    3.86761 theta threshold  0.05
 Sensitivity report (framework: rosenbaum; source: pairs)
 Matched pairs: 39 (39 with nonzero difference); Wilcoxon signed rank
   statistic = 715; sensitivity value Gamma = 3.87 (one-sided alpha =
@@ -78,3 +90,5 @@ These values describe how strong an omitted confounder would need to
   on the framework's own modelling assumptions. Judge plausibility
   against substantive knowledge and, where available, observed
   benchmarks.
+   level theta_start lambda_null lambda_sig        sig_rule alpha
+1 pooled    4.535374          NA   3.231504 theta threshold 0.025
