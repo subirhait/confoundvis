@@ -43,6 +43,21 @@ install.packages("confoundvis")
 pak::pak("subirhait/confoundvis")
 ```
 
+## Quick start: everything in one call
+
+```r
+library(confoundvis)
+fit <- lm(mpg ~ am + wt + hp, data = mtcars)
+res <- confoundvis(fit, "wt")   # partial R2, ITCV, RIR, and covariate benchmarks
+res                             # table and plain-language summary
+plot(res)                       # one panel per analysis
+plot(res, which = "benchmarks") # measured covariates
+```
+
+`confoundvis()` also accepts a logistic regression (RIR through
+'konfound') or a vector of matched-pair differences (Rosenbaum bounds).
+The functions below give finer control.
+
 ## Example
 
 ```r

@@ -15,6 +15,12 @@
 
 ## New features
 
+* `confoundvis()` runs everything in one call. Give it a fitted `lm` and the
+  treatment name, a `glm` (RIR through 'konfound'), or a vector of
+  matched-pair differences (Rosenbaum bounds). It prints a table and a
+  plain-language summary, compares the result with the measured
+  covariates, and has `plot()` methods for the paths, the covariate
+  benchmarks, and the surface.
 * `sens_profile()` runs the partial R2, ITCV, and RIR analyses for one
   coefficient in one call, adds any further paths (for example an E-value
   or Rosenbaum path), and returns an object that prints as a side-by-side

@@ -2,7 +2,6 @@
 % Please edit documentation in R/zzz.R
 \docType{package}
 \name{confoundvis-package}
-\alias{confoundvis}
 \alias{confoundvis-package}
 \title{confoundvis: A Common Interface for Visualizing and Reporting Sensitivity Analyses for Unmeasured Confounding}
 \description{
@@ -34,6 +33,7 @@ Main entry points:
     [plot_sensitivity_surface()].
   \item Plots: [plot_robustness_curve()], [plot_sensitivity_love()],
     [plot_sensitivity_contour()].
+  \item Everything in one call: [confoundvis()].
   \item Reporting: [robustness_points()], [sens_report()], and
     [sens_table()] for several paths side by side.
 }
@@ -52,11 +52,6 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
-
-Authors:
-\itemize{
-  \item Subir Hait \email{haitsubi@msu.edu} (\href{https://orcid.org/0009-0004-9871-9677}{ORCID})
-}
 
 }
 \keyword{internal}

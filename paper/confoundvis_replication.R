@@ -36,6 +36,12 @@ xvars <- setdiff(names(rhc), c("survival", "death"))   # RHC and 72 covariates
 fit <- lm(reformulate(xvars, response = "death"), data = rhc)  # stats::lm()
 summary(fit)$coefficients["RHC", ]             # estimate, SE, t, p for RHC
 
+# ---- Section 4 (shown in "What the package adds"): everything in one call -----
+res <- confoundvis(fit, treatment = "RHC",               # one call
+                   labels = c(surv2md1 = "Estimated 2-month survival"))
+res                                            # table and summary
+plot(res)                                      # one panel per analysis
+
 # ---- Section 4.2: one analysis at a time ------------------------------------
 grid <- seq(0, 0.12, by = 0.0001)              # confounder strengths to evaluate
 p_r2 <- sens_path_lm(fit, treatment = "RHC", lambda = grid)  # partial R2 path
@@ -263,6 +269,8 @@ checks <- c(
                            abs(p_kf$theta - it$path$theta),
                            abs(p_kr$theta - rr$path$theta)) == 0,
   profile_matches    = isTRUE(all.equal(prof$table$summary_value[1:3],
+                                        c(p_r2$meta$rv, it$itcv, rr$rir))),
+  onecall_matches    = isTRUE(all.equal(res$table$summary_value,
                                         c(p_r2$meta$rv, it$itcv, rr$rir))),
   evalue_null        = abs(rpe$lambda_null - e["E-values", "point"]) < 1e-3,
   evalue_ci          = abs(rpe$lambda_sig - e["E-values", "lower"]) < 1e-3,

@@ -1,5 +1,33 @@
     Estimate   Std. Error      t value     Pr(>|t|) 
 6.336115e-02 1.341526e-02 4.723064e+00 2.379256e-06 
+confoundvis: sensitivity to unmeasured confounding
+Treatment: RHC; estimate 0.06336
+
+       path       summary_name summary_value lambda_null lambda_sig alpha
+ partial_r2    RV (point null)     6.083e-02     0.06083    0.03605  0.05
+       itcv ITCV (conditional)     3.758e-02     0.06265    0.03758  0.05
+        rir        RIR (cases)     3.355e+03     1.00000    0.58490  0.05
+
+In plain language:
+- Partial R2: an omitted confounder explaining 6.1% of the residual
+  variance of both treatment and outcome would remove the estimate
+  (robustness value); 3.6% would make it nonsignificant.
+- ITCV: a confounder whose partial correlations with treatment and outcome
+  each reach about 0.194 (product 0.0376) would make the estimate
+  nonsignificant.
+- RIR: 58.5% of the estimate would have to be due to bias; 3,355 cases
+  would have to be replaced with cases with no effect.
+- Benchmark (ITCV): the strongest measured covariate is Estimated 2-month
+  survival (0.00899 vs. threshold 0.0376); no measured covariate reaches
+  the threshold.
+- Benchmark (partial R2): the strongest measured covariate is Estimated
+  2-month survival (0.00853 vs. threshold 0.0628); no measured covariate
+  reaches the threshold.
+- These numbers use different scales; do not compare or rank them. They
+  show how strong a confounder would need to be, not whether one exists.
+
+Plots: plot(x) draws the paths; plot(x, which = "benchmarks") the covariates;
+plot(x, which = "surface") the surface.
    level theta_start lambda_null lambda_sig     sig_rule alpha
 1 pooled  0.06336115  0.06083428 0.03604828 t, df = 5660  0.05
 Sensitivity report (framework: partial_r2; source: lm)
@@ -29,14 +57,18 @@ E-values 1.439372 1.310622       NA
 1 pooled  0.09781046    1.439372   1.310622 normal CI  0.05
 <confoundvis_profile> treatment: RHC; 4 analyses
 
-<confoundvis_table>
- path       summary_name       summary_value lambda_null lambda_sig alpha
- partial_r2 RV (point null)    6.083e-02     0.06083     0.03605    0.05 
- itcv       ITCV (conditional) 3.758e-02     0.06265     0.03758    0.05 
- rir        RIR (cases)        3.355e+03     1.00000     0.58490    0.05 
- evalue     E-value (point)    1.439e+00     1.43900     1.31100    0.05 
+       path       summary_name summary_value lambda_null lambda_sig alpha
+ partial_r2    RV (point null)     6.083e-02     0.06083    0.03605  0.05
+       itcv ITCV (conditional)     3.758e-02     0.06265    0.03758  0.05
+        rir        RIR (cases)     3.355e+03     1.00000    0.58490  0.05
+     evalue    E-value (point)     1.439e+00     1.43900    1.31100  0.05
 
-Each row keeps its own sensitivity parameter (column `parameter`); lambda values are comparable only within a row.
+lambda (the sensitivity parameter) in each row:
+  partial_r2  Confounder partial R2 with treatment and outcome
+  itcv        Confounder impact k = r(D,U) x r(Y,U)
+  rir         Proportion of cases replaced with null-effect cases
+  evalue      Confounder risk ratio with treatment and outcome
+Values are comparable only within a row; do not rank the rows.
                              label        r_du        r_yu       impact
 16      Estimated 2-month survival -0.08834258 -0.10178910  0.008992311
 19                     Weight (kg)  0.08423773 -0.06965977 -0.005867981

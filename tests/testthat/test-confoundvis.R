@@ -1,0 +1,46 @@
+test_that("confoundvis() on an lm runs all analyses and benchmarks", {
+  fit <- lm(mpg ~ am + wt + hp, data = mtcars)
+  res <- confoundvis(fit, "wt", labels = c(hp = "Horsepower"))
+  expect_s3_class(res, "confoundvis_result")
+  expect_equal(res$type, "lm")
+  expect_named(res$paths, c("partial_r2", "itcv", "rir"))
+  expect_equal(res$table$summary_value[1], sens_path_lm(fit, "wt")$meta$rv)
+  expect_equal(res$table$summary_value[3], rir_lm(fit, "wt")$rir)
+  expect_named(res$benchmarks, c("itcv", "partial_r2"))
+  expect_true(any(grepl("Horsepower", res$summary)))
+  expect_output(print(res), "In plain language")
+  expect_s3_class(plot(res), "ggplot")
+  expect_s3_class(plot(res, which = "benchmarks"), "ggplot")
+  expect_s3_class(plot(res, which = "benchmarks_itcv"), "ggplot")
+  expect_s3_class(plot(res, which = "surface"), "ggplot")
+})
+
+test_that("confoundvis() handles matched pairs and bad input", {
+  d <- c(1.2, 0.8, 2.1, 0.4, 1.7, -0.3, 0.9, 1.5, 2.2, 0.6, 1.1, 0.7)
+  res <- confoundvis(d)
+  expect_equal(res$type, "pairs")
+  expect_equal(res$paths$rosenbaum$meta$sens_value,
+               sens_path_pairs(d, gamma = seq(1, 20, by = 0.01))$meta$sens_value)
+  expect_output(print(res), "Gamma")
+  expect_s3_class(plot(res), "ggplot")
+  expect_error(confoundvis("a"), "must be")
+  fit <- lm(mpg ~ am + wt, data = mtcars)
+  expect_error(confoundvis(fit), "treatment")
+})
+
+test_that("confoundvis() on a glm uses konfound", {
+  skip_if_not_installed("konfound")
+  set.seed(3)
+  n <- 400
+  x1 <- rnorm(n)
+  d <- rbinom(n, 1, plogis(0.3 * x1))
+  y <- rbinom(n, 1, plogis(-0.5 + 0.9 * d + 0.4 * x1))
+  g <- glm(y ~ d + x1, family = binomial)
+  res <- suppressWarnings(confoundvis(g, "d"))
+  expect_equal(res$type, "glm")
+  k <- suppressWarnings(suppressMessages(
+    konfound::konfound(g, d, index = "RIR", to_return = "raw_output")))
+  expect_equal(res$paths$rir$meta$rir, k$RIR_primary)
+  expect_output(print(res), "log-odds")
+  expect_error(plot(res, which = "surface"), "no two-parameter surface")
+})

@@ -6,6 +6,7 @@ itcvu_vs_konfound TRUE
 rir_vs_konfound TRUE
 paths_identical TRUE
 profile_matches TRUE
+onecall_matches TRUE
 evalue_null TRUE
 evalue_ci TRUE
 surface_r2_diag TRUE

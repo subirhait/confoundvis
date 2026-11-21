@@ -15,8 +15,10 @@
 A [ggplot2::ggplot()] object.
 }
 \description{
-One panel per analysis, each with its own axes. The dotted line is the
-null value, the dashed line is the stored threshold (when the analysis has
-one), and the vertical line marks the confounder strength at which
-significance is lost.
+One panel per analysis, each with its own axes. The panel title names the
+framework and states what the horizontal axis (x, the sensitivity
+parameter) and the vertical axis (y, the path value) measure in that
+panel. The dotted line is the null value, the dashed line is the stored
+threshold (when the analysis has one), and the vertical long-dashed line
+marks the confounder strength at which significance is lost.
 }

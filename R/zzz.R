@@ -29,6 +29,7 @@
 #'     [plot_sensitivity_surface()].
 #'   \item Plots: [plot_robustness_curve()], [plot_sensitivity_love()],
 #'     [plot_sensitivity_contour()].
+#'   \item Everything in one call: [confoundvis()].
 #'   \item Reporting: [robustness_points()], [sens_report()], and
 #'     [sens_table()] for several paths side by side.
 #' }
@@ -38,6 +39,8 @@
 #' it inherits the assumptions of the framework that produced the path.
 #'
 #' @keywords internal
+#' @name confoundvis-package
+#' @aliases confoundvis-package
 #'
 #' @importFrom rlang .data
 #' @importFrom ggplot2 ggplot aes geom_line geom_point geom_ribbon geom_vline geom_path geom_text coord_equal facet_wrap labs
