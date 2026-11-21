@@ -73,7 +73,18 @@ print.confoundvis_profile <- function(x, ...) {
   tb <- x$table
   keep <- c("path", "summary_name", "summary_value", "lambda_null",
             "lambda_sig", "alpha")
-  print(structure(tb[, keep], class = c("confoundvis_table", "data.frame")), ...)
+  out <- tb[, keep]
+  class(out) <- "data.frame"
+  out$summary_value <- signif(out$summary_value, 4)
+  out$lambda_null <- signif(out$lambda_null, 4)
+  out$lambda_sig <- signif(out$lambda_sig, 4)
+  print(out, row.names = FALSE, ...)
+  cat("\nlambda (the sensitivity parameter) in each row:\n")
+  for (i in seq_len(nrow(tb))) {
+    cat(sprintf("  %-11s %s\n", tb$path[i],
+                if (is.na(tb$parameter[i])) "-" else tb$parameter[i]))
+  }
+  cat("Values are comparable only within a row; do not rank the rows.\n")
   invisible(x)
 }
 
