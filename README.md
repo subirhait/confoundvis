@@ -49,7 +49,37 @@ install.packages("confoundvis")
 pak::pak("subirhait/confoundvis")
 ```
 
-## Quick start: everything in one call
+## Quick start: does a practical conclusion survive unmeasured confounding?
+
+Fit a logistic model with your own data, choose a risk difference that
+matters in practice, and describe a hypothetical binary confounder by how
+common it is among treated and untreated people. `sens_risk_difference()`
+shows how strong the confounder's association with the outcome would have
+to be to bring the estimate down to the practical threshold, and to zero.
+
+```r
+library(confoundvis)
+set.seed(1)
+n <- 2000
+x <- rnorm(n)                                   # a measured covariate
+a <- rbinom(n, 1, plogis(0.5 * x))              # binary treatment
+y <- rbinom(n, 1, plogis(-1.5 + 0.4 * a + 0.6 * x))
+dat <- data.frame(y, a, x)
+
+fit <- glm(y ~ a + x, family = binomial, data = dat)   # replace with your model
+rd  <- sens_risk_difference(fit, treatment = "a",
+                            p1 = 0.4, p0 = 0.2,         # confounder prevalence
+                            threshold = 0.02)           # 2 events per 100
+sens_report(rd)            # threshold and zero crossings, in words
+plot_robustness_curve(rd)  # adjusted risk difference by confounder strength
+plot_sensitivity_surface(sens_surface(rd))   # vary the prevalence too
+```
+
+Crossing the practical threshold and erasing the effect are different
+questions, and they usually need different confounder strengths. The path
+shows the range across confounding scenarios; the band shows sampling error.
+
+## Everything in one call
 
 ```r
 library(confoundvis)

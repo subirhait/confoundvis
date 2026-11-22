@@ -21,6 +21,10 @@ This release includes the changes prepared as 0.3.1, which was not released.
   in the review of the 0.3.0 article. Scenarios that imply risks outside
   [0, 1] are not used, offsets are kept, the threshold may lie on either
   side of zero, and the report and plot use the level given in `alpha`.
+  The report says so in words when the estimate is already within the
+  threshold without confounding, or when no confounder strength reaches
+  the threshold or zero (the bias is bounded for given prevalences).
+* The README quick start now leads with this workflow on simulated data.
 * `plot_robustness_curve()` draws bands at the level stored in the path
   (for example 99% for a path built with `alpha = 0.01`), not always 95%.
 * The vignette has new sections on risk differences, instrumental

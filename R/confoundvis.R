@@ -188,15 +188,20 @@ confoundvis <- function(x, treatment = NULL, alpha = 0.05, labels = NULL,
         "bias-adjusted bound to the null (RV); %s would make it ",
         "nonsignificant at alpha = %s (RVa)."),
         f(m$rho), pct(m$rv), pct(rw$lambda_sig), f(rw$alpha)),
-      risk_difference = sprintf(paste0(
-        "Risk difference: with a binary confounder present in %s of the ",
-        "treated and %s of the untreated, a confounder-outcome %s of %s ",
-        "would bring the risk difference (%s) to the threshold %s, and %s ",
-        "to zero."), pct(m$p1), pct(m$p0),
-        if (m$confounder_effect == "odds_ratio") "odds ratio" else "risk difference",
-        if (is.na(m$lambda_threshold)) "(not reached)" else f(m$lambda_threshold),
-        f(m$estimate), f(m$rd_threshold),
-        if (is.na(m$lambda_zero)) "no strength in range" else f(m$lambda_zero)),
+      risk_difference = {
+        lo <- if (m$confounder_effect == "odds_ratio") 1 else 0
+        eff <- if (m$confounder_effect == "odds_ratio") "odds ratio" else "risk difference"
+        st <- function(v, tgt) if (is.na(v)) sprintf("no %s brings it to %s", eff, tgt)
+          else if (v <= lo) sprintf("it is already at or beyond %s", tgt)
+          else sprintf("a %s of %s brings it to %s", eff, f(v), tgt)
+        sprintf(paste0(
+          "Risk difference %s: with a binary confounder present in %s of the ",
+          "treated and %s of the untreated, %s%s."), f(m$estimate),
+          pct(m$p1), pct(m$p0),
+          if (m$rd_threshold != 0) paste0(st(m$lambda_threshold,
+            paste("the threshold", f(m$rd_threshold))), ", and ") else "",
+          st(m$lambda_zero, "zero"))
+      },
       rosenbaum = sprintf(paste0(
         "Rosenbaum: the result stays significant (one-sided alpha = %s) ",
         "unless a hidden factor could make one unit in a pair %s times as ",

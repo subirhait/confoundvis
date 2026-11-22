@@ -232,16 +232,24 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
         "Standardized risks (%s): %s treated vs %s untreated; risk difference ",
         "%s (SE %s)."), meta$target, pp(meta$risk1_obs), pp(meta$risk0_obs),
         fmt(meta$estimate), fmt(meta$se0)),
-      sprintf(paste0(
-        "Hypothetical binary confounder: prevalence %s among the treated and ",
-        "%s among the untreated. Under this scenario, a confounder-outcome %s ",
-        "of %s brings the risk difference to the practical threshold %s, and ",
-        "%s brings it to zero. %s"),
-        pp(meta$p1), pp(meta$p0), eff, st(meta$lambda_threshold),
-        fmt(meta$rd_threshold), st(meta$lambda_zero), {
-          lc <- .rd_ci_cross_meta(meta, alpha)
-          lo <- if (meta$confounder_effect == "odds_ratio") 1 else 0
-          if (is.na(lc)) sprintf(paste0(
+      {
+        lo <- if (meta$confounder_effect == "odds_ratio") 1 else 0
+        unreach <- if (meta$confounder_effect == "odds_ratio")
+          "No odds ratio brings the risk difference to %s (with these prevalences the bias is bounded)"
+        else paste0("No feasible risk difference (up to ", fmt(meta$max_feasible),
+                    ") brings the risk difference to %s")
+        say <- function(v, target) {
+          if (is.na(v)) sprintf(unreach, target)
+          else if (v <= lo) {
+            if (target == "zero") "The estimate is already at or past zero without confounding"
+            else sprintf("Without confounding the estimate is already no farther from zero than %s", target)
+          }
+          else sprintf("A confounder-outcome %s of %s brings the risk difference to %s",
+                       eff, fmt(v), target)
+        }
+        thr_t <- sprintf("the practical threshold %s", fmt(meta$rd_threshold))
+        lc <- .rd_ci_cross_meta(meta, alpha)
+        ci_t <- if (is.na(lc)) sprintf(paste0(
             "Allowing for sampling error (alpha = %s), the confidence limit ",
             "nearest zero does not reach the threshold."), alpha)
           else if (lc <= lo) sprintf(paste0(
@@ -250,7 +258,12 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
           else sprintf(paste0(
             "Allowing for sampling error (alpha = %s), the confidence limit ",
             "nearest zero reaches the threshold at %s."), alpha, fmt(lc))
-        }),
+        paste0(sprintf(paste0(
+          "Hypothetical binary confounder: prevalence %s among the treated ",
+          "and %s among the untreated. "), pp(meta$p1), pp(meta$p0)),
+          if (meta$rd_threshold != 0) paste0(say(meta$lambda_threshold, thr_t), ". ") else "",
+          say(meta$lambda_zero, "zero"), ". ", ci_t)
+      },
       if (meta$confounder_effect == "risk_difference" && is.finite(meta$max_feasible))
         sprintf(paste0("Scenarios with a confounder-outcome risk difference ",
                        "above %s imply risks outside [0, 1] and are not used."),

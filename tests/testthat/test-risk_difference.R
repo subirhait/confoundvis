@@ -136,3 +136,34 @@ test_that("thresholds beyond zero, offsets, and the confidence level are honoure
   expect_match(paste(sens_report(r1)$text, collapse = " "), "alpha = 0.01")
   expect_false(any(grepl("alpha = 0.05", sens_report(r1)$text)))
 })
+
+test_that("prevalences at 0 and 1 give the closed-form answers", {
+  f <- toy_fit()
+  # additive, p1 = 1, p0 = 0: RD - delta; feasible while delta <= r1 = 0.16
+  r <- sens_risk_difference(f, "a", 1, 0, confounder_effect = "risk_difference",
+                            threshold = 0.02)
+  expect_equal(r$meta$lambda_zero, 0.04, tolerance = 1e-7)
+  expect_equal(r$meta$lambda_threshold, 0.02, tolerance = 1e-7)
+  expect_equal(r$meta$max_feasible, 0.16, tolerance = 1e-7)
+  # odds ratio, p1 = 1, p0 = 0 (equal groups, q = 0.5):
+  # RD* = 0.02 + 0.5 [expit(logit .16 - g) - expit(logit .12 + g)]
+  ro <- sens_risk_difference(f, "a", 1, 0)
+  g <- log(ro$meta$lambda_zero)
+  expect_equal(0.02 + 0.5 * (plogis(qlogis(0.16) - g) - plogis(qlogis(0.12) + g)),
+               0, tolerance = 1e-7)
+  # swapping the coding of U gives the same answer
+  expect_equal(sens_risk_difference(f, "a", 0, 1)$meta$lambda_zero,
+               ro$meta$lambda_zero, tolerance = 1e-7)
+})
+
+test_that("report wording for thresholds already met or never reached", {
+  f <- toy_fit()
+  t1 <- paste(sens_report(sens_risk_difference(f, "a", 0.4, 0.2, threshold = 0.05))$text,
+              collapse = " ")
+  expect_match(t1, "already no\\s+farther from zero than the practical threshold")
+  expect_false(grepl("odds ratio of\\s+1 brings", t1))
+  t2 <- paste(sens_report(sens_risk_difference(f, "a", 0.25, 0.2, threshold = 0.02))$text,
+              collapse = " ")
+  expect_match(t2, "No odds ratio brings the risk\\s+difference to zero")
+  expect_false(grepl("not reached brings", t2))
+})
