@@ -98,6 +98,10 @@ plot_robustness_curve <- function(x,
       p <- p + ggplot2::geom_hline(yintercept = ref, linetype = "dotted",
                                    colour = "grey40")
     }
+    if (what == "theta" && !is.null(meta$rd_threshold) && meta$rd_threshold != 0) {
+      p <- p + ggplot2::geom_hline(yintercept = meta$rd_threshold,
+                                   linetype = "dotdash", colour = "grey30")
+    }
     if (what == "theta" && !is.null(meta$threshold)) {
       p <- p + ggplot2::geom_hline(yintercept = meta$threshold,
                                    linetype = "dashed", colour = "grey40")

@@ -13,6 +13,7 @@
     rir        = list(name = "RIR (cases)",              value = meta$rir),
     iv         = list(name = "RV (Anderson-Rubin)",      value = meta$rv),
     dml        = list(name = "RVa (DoubleML)",           value = meta$rva),
+    risk_difference = list(name = "Strength to reach threshold", value = meta$lambda_threshold),
     list(name = NA_character_, value = NA_real_))
 }
 

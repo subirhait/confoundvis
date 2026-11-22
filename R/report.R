@@ -223,6 +223,25 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
       meta$rho, if (is.na(meta$rv)) "not reached" else fmt(meta$rv),
       if (is.na(meta$rva)) "not reached" else fmt(meta$rva), meta$level,
       meta$default_alpha))
+  } else if (fw == "risk_difference" && !is.null(meta$estimate)) {
+    pp <- function(v) paste0(formatC(100 * v, format = "f", digits = 1), "%")
+    st <- function(v) if (is.na(v)) "not reached" else fmt(v)
+    eff <- if (meta$confounder_effect == "odds_ratio") "odds ratio" else "risk difference"
+    txt <- c(txt,
+      sprintf(paste0(
+        "Standardized risks (%s): %s treated vs %s untreated; risk difference ",
+        "%s (SE %s)."), meta$target, pp(meta$risk1_obs), pp(meta$risk0_obs),
+        fmt(meta$estimate), fmt(meta$se0)),
+      sprintf(paste0(
+        "Hypothetical binary confounder: prevalence %s among the treated and ",
+        "%s among the untreated. Under this scenario, a confounder-outcome %s ",
+        "of %s brings the risk difference to the practical threshold %s, and ",
+        "%s brings it to zero. With sampling error, the confidence limit ",
+        "reaches the threshold at %s."),
+        pp(meta$p1), pp(meta$p0), eff, st(meta$lambda_threshold),
+        fmt(meta$rd_threshold), st(meta$lambda_zero), st(meta$lambda_threshold_ci)),
+      paste("The path shows the range across confounding scenarios, not",
+            "sampling error; standard errors are given for each scenario."))
   } else if (fw == "rosenbaum" && !is.null(meta$statistic)) {
     txt <- c(txt, sprintf(
       "Matched pairs: %s (%s with nonzero difference); %s = %s; sensitivity value %s (one-sided alpha = %s).",
@@ -265,7 +284,8 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
       txt <- c(txt, sprintf("%s%s; %s.", pre, r1, r2))
       next
     }
-    what <- if (fw %in% c("iv", "dml")) "the bias-adjusted bound" else "the point estimate"
+    what <- if (fw %in% c("iv", "dml")) "the bias-adjusted bound" else
+      if (fw == "risk_difference") "the adjusted risk difference" else "the point estimate"
     s1 <- if (is.na(p$lambda_null))
       sprintf("%s does not reach the null for lambda <= %s", what, fmt(max_l))
     else sprintf("%s reaches the null at lambda = %s", what, fmt(p$lambda_null))

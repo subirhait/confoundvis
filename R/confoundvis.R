@@ -15,7 +15,9 @@
 #'   \item A logistic regression or other [stats::glm()] fit: the RIR
 #'     computed by 'konfound' (which must be installed) and imported with
 #'     [from_konfound()]. konfound's RIR for such models is an
-#'     approximation; see its documentation.
+#'     approximation; see its documentation. For a binomial model with a
+#'     binary treatment, give `risk` to add the risk-difference analysis of
+#'     [sens_risk_difference()].
 #'   \item A numeric vector: treated as treated-minus-control differences in
 #'     matched pairs, analysed with Rosenbaum's sensitivity model
 #'     ([sens_path_pairs()]; one-sided test).
@@ -46,6 +48,10 @@
 #'   labels, passed to [covariate_impacts()].
 #' @param extra Optional named list of further `confoundsens` paths (for
 #'   example from [from_evalue()]) to add for a linear model.
+#' @param risk For a binomial `glm`: an optional list with the confounder
+#'   scenario for [sens_risk_difference()], with elements `p1`, `p0`, and
+#'   optionally `threshold` and any other argument of that function. The
+#'   risk-difference analysis is then added to the RIR.
 #'
 #' @return An object of class `confoundvis_result`: a list with `type`
 #'   (`"lm"`, `"glm"`, `"pairs"`, `"iv"`, or `"dml"`), `treatment`, `paths` (named list of
@@ -66,7 +72,7 @@
 #' d <- c(1.2, 0.8, 2.1, 0.4, 1.7, -0.3, 0.9, 1.5, 2.2, 0.6, 1.1, 0.7)
 #' confoundvis(d)
 confoundvis <- function(x, treatment = NULL, alpha = 0.05, labels = NULL,
-                        extra = NULL) {
+                        extra = NULL, risk = NULL) {
   if (is.numeric(x) && is.null(dim(x)) && !inherits(x, "lm")) {
     p <- sens_path_pairs(x, gamma = seq(1, 20, by = 0.01), alpha = alpha)
     paths <- list(rosenbaum = p)
@@ -108,6 +114,15 @@ confoundvis <- function(x, treatment = NULL, alpha = 0.05, labels = NULL,
       to_return = "raw_output"))))
     paths <- list(rir = from_konfound(k, index = "RIR", treatment = treatment,
                                       alpha = alpha))
+    if (!is.null(risk)) {
+      if (!is.list(risk) || is.null(risk$p1) || is.null(risk$p0)) {
+        stop("`risk` must be a list with elements `p1` and `p0`.", call. = FALSE)
+      }
+      tv <- if (!is.null(risk$treatment)) risk$treatment else treatment
+      args <- c(list(model = x, treatment = tv, alpha = alpha),
+                risk[setdiff(names(risk), "treatment")])
+      paths$risk_difference <- do.call(sens_risk_difference, args)
+    }
     out <- list(type = "glm", treatment = treatment, paths = paths,
                 table = sens_table(paths), benchmarks = NULL, profile = NULL)
   } else if (inherits(x, "lm")) {
@@ -173,6 +188,15 @@ confoundvis <- function(x, treatment = NULL, alpha = 0.05, labels = NULL,
         "bias-adjusted bound to the null (RV); %s would make it ",
         "nonsignificant at alpha = %s (RVa)."),
         f(m$rho), pct(m$rv), pct(rw$lambda_sig), f(rw$alpha)),
+      risk_difference = sprintf(paste0(
+        "Risk difference: with a binary confounder present in %s of the ",
+        "treated and %s of the untreated, a confounder-outcome %s of %s ",
+        "would bring the risk difference (%s) to the threshold %s, and %s ",
+        "to zero."), pct(m$p1), pct(m$p0),
+        if (m$confounder_effect == "odds_ratio") "odds ratio" else "risk difference",
+        if (is.na(m$lambda_threshold)) "(not reached)" else f(m$lambda_threshold),
+        f(m$estimate), f(m$rd_threshold),
+        if (is.na(m$lambda_zero)) "no strength in range" else f(m$lambda_zero)),
       rosenbaum = sprintf(paste0(
         "Rosenbaum: the result stays significant (one-sided alpha = %s) ",
         "unless a hidden factor could make one unit in a pair %s times as ",

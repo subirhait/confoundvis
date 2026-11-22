@@ -4,6 +4,22 @@ This release includes the changes prepared as 0.3.1, which was not released.
 
 ## New frameworks
 
+* `sens_risk_difference()` gives sensitivity analysis on the absolute-risk
+  scale for a binary outcome and a binary treatment analysed with logistic
+  regression. A hypothetical binary confounder is described by its
+  prevalence among the treated and the untreated and its association with
+  the outcome (an odds ratio, or a risk difference), as in Lin, Psaty, and
+  Kronmal (1998). The function returns the standardized risks and risk
+  difference (ATE or ATT) for each confounder strength and the strengths at
+  which the risk difference reaches a practical threshold and zero. The
+  range across scenarios is reported separately from sampling error
+  (delta-method standard errors). Without confounding it equals
+  `marginaleffects::avg_comparisons()`, estimate and standard error; the
+  risk-difference version equals the correction used by
+  `episensr::confounders(type = "RD")`. `confoundvis(glm, risk = list(...))`
+  adds it to the RIR. This answers the request for logistic-model support
+  in the review of the 0.3.0 article.
+
 * `from_iv_sensemakr()` imports the sensitivity analysis of instrumental
   variable estimates from 'iv.sensemakr' (Cinelli and Hazlett, 2025). The
   path follows the equal-strength line on which 'iv.sensemakr' defines its

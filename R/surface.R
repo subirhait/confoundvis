@@ -29,6 +29,7 @@
 #' | `rosenbaum` | \eqn{\Lambda} | \eqn{\Delta} | implied \eqn{\Gamma} |
 #' | `iv` | \eqn{R^2_{Z \sim W \mid X}} | \eqn{R^2_{Y_0 \sim W \mid Z, X}} | adjusted Anderson--Rubin limit nearest the null |
 #' | `dml` | `cf_d` | `cf_y` | bias-adjusted bound nearest the null |
+#' | `risk_difference` | prevalence of \eqn{U} among the treated (`p0` fixed) | confounder-outcome odds ratio or risk difference | adjusted risk difference |
 #'
 #' Each surface carries boundaries computed from the published formula of the
 #' framework, in closed form where one exists and otherwise by root finding
@@ -59,14 +60,18 @@
 #' benchmark bounds of the `iv.sensemakr` object; its boundaries are where
 #' the adjusted Anderson--Rubin limit nearest the null (solid) and the bound
 #' on the estimate (dashed) reach the null. The DoubleML surface is the
-#' plane of `doubleml`'s `sensitivity_plot()` (Chernozhukov et al., 2024). The surface only evaluates these published formulas. It
+#' plane of `doubleml`'s `sensitivity_plot()` (Chernozhukov et al., 2024).
+#' The risk-difference surface varies the prevalence of the confounder among
+#' the treated with its prevalence among the untreated held at `p0` (Lin et
+#' al., 1998); it adds the practical threshold as a boundary and uses at most
+#' 61 grid points per axis, because each point is a g-computation. The surface only evaluates these published formulas. It
 #' reports no area or share of the plane: the size of a shaded zone depends
 #' on the chosen axis ranges and has no inferential meaning.
 #'
 #' @param x A `confoundsens` object produced by [sens_path_lm()],
 #'   [from_sensemakr()], [itcv_lm()] (its `$path`), [from_konfound()] with
 #'   `index = "IT"`, [from_evalue()], [sens_path_pairs()],
-#'   [from_iv_sensemakr()], or [sens_dml()].
+#'   [from_iv_sensemakr()], [sens_dml()], or [sens_risk_difference()].
 #' @param a,b Optional numeric grids for the two axes. Defaults depend on
 #'   the framework and extend beyond the relevant boundary.
 #' @param n Number of grid points per axis when `a` or `b` is not supplied.
@@ -136,11 +141,12 @@ sens_surface <- function(x, a = NULL, b = NULL, n = 201, alpha = 0.05) {
     rosenbaum  = .surf_rosenbaum(x, a, b, n),
     iv         = .surf_iv(x$meta, a, b, n),
     dml        = .surf_dml(x$meta, a, b, n, if (missing(alpha)) NULL else alpha),
+    risk_difference = .surf_rd(x$meta, a, b, n, if (missing(alpha)) NULL else alpha),
     rir        = stop("RIR has a single sensitivity parameter; there is no ",
                       "two-parameter surface.", call. = FALSE),
     stop("sens_surface() needs a path from sens_path_lm(), from_sensemakr(), ",
          "itcv_lm(), from_konfound(), from_evalue(), sens_path_pairs(), ",
-         "from_iv_sensemakr(), or sens_dml().",
+         "from_iv_sensemakr(), sens_dml(), or sens_risk_difference().",
          call. = FALSE))
   out$meta$framework <- fw
   out$meta$treatment <- x$meta$treatment
@@ -221,7 +227,8 @@ sens_surface <- function(x, a = NULL, b = NULL, n = 201, alpha = 0.05) {
                 "Infeasible"                       = "grey60",
                 "Confidence interval includes 1"   = "#bdd7e7",
                 "Point estimate explained away"    = "#fcbba1",
-                "Upper-bound P-value at least 0.5" = "#fcbba1")
+                "Upper-bound P-value at least 0.5" = "#fcbba1",
+                "Below practical threshold"        = "#fee6ce")
 
 # ---- partial R2 ------------------------------------------------------------
 .surf_pr2 <- function(m, a, b, n, alpha) {

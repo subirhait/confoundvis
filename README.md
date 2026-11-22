@@ -18,19 +18,20 @@ adds no new sensitivity parameter or measure.
 | Robustness of inference to replacement (RIR) | Frank et al. (2013) | `rir_lm()`, `from_konfound(index = "RIR")` | `konfound` |
 | E-value | VanderWeele & Ding (2017) | `from_evalue()` | `EValue` |
 | Rosenbaum bounds, matched pairs | Rosenbaum (2002) | `sens_path_pairs()` | `DOS2`, `sensitivity2x2xk`, `sensitivitymv` |
+| Risk difference, binary confounder (logistic model) | Lin, Psaty & Kronmal (1998) | `sens_risk_difference()` | `marginaleffects` (no confounding), `episensr` (RD correction) |
 | Instrumental variables (Anderson–Rubin) | Cinelli & Hazlett (2025) | `from_iv_sensemakr()` | `iv.sensemakr` |
 | Double machine learning (PLR, IRM-ATE) | Chernozhukov et al. (2024) | `sens_dml()` for R `DoubleML` fits | Python `doubleml` |
 
 ## Common and framework-specific tools
 
-| Tool | Partial R² | ITCV | RIR | E-value | Rosenbaum | IV | DML |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `plot_robustness_curve()`, `robustness_points()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `sens_table()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `sens_report()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `sens_surface()`, `plot_sensitivity_surface()` | ✓ | ✓ | – | ✓ | ✓ | ✓ | ✓ |
-| `covariate_impacts()`, `plot_sensitivity_love()` | ✓ | ✓ | – | – | – | – | – |
-| `plot_sensitivity_contour()` (exact correlation contour) | – | ✓ | – | – | – | – | – |
+| Tool | Partial R² | ITCV | RIR | E-value | Rosenbaum | Risk diff. | IV | DML |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `plot_robustness_curve()`, `robustness_points()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_table()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_report()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_surface()`, `plot_sensitivity_surface()` | ✓ | ✓ | – | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `covariate_impacts()`, `plot_sensitivity_love()` | ✓ | ✓ | – | – | – | – | – | – |
+| `plot_sensitivity_contour()` (exact correlation contour) | – | ✓ | – | – | – | – | – | – |
 
 RIR has a single sensitivity parameter, so it has no two-parameter surface.
 Covariate benchmarks need a fitted linear model, so they are not available for
@@ -65,6 +66,17 @@ instrumental-variable analysis from 'iv.sensemakr', or a `DoubleMLPLR` /
 `DoubleMLIRM` fit (with `store_predictions = TRUE`).
 
 ```r
+# binary outcome: risk difference with a practical threshold
+# (right-heart catheterization data, Connors et al., 1996)
+data("RHC", package = "ATbounds")
+rhc <- RHC
+rhc$death30 <- 1 - rhc$survival   # death within 30 days
+rhc$survival <- NULL
+fit <- glm(death30 ~ ., family = binomial, data = rhc)
+rd <- sens_risk_difference(fit, "RHC", p1 = 0.4, p0 = 0.2, threshold = 0.02)
+sens_report(rd)
+plot_robustness_curve(rd)
+
 # instrumental variables
 data("card", package = "iv.sensemakr")
 xm <- model.matrix(~ exper + expersq + black + south + smsa + reg661 + reg662 +
