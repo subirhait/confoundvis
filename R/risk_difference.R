@@ -39,28 +39,27 @@
   }
 }
 
-# Additive model: the standardized risk in each arm, split into the two
-# strata of U (risk - delta p and risk + delta (1 - p)), must lie in [0, 1].
-# Checked on the standardized risks, so delta is read as an average
-# confounder-outcome risk difference, as in the crude-table correction.
-.rd_add_ok <- function(ob, s, p1) {
-  R1 <- sum(ob$w * ob$r1); R0 <- sum(ob$w * ob$r0)
-  ok1 <- R1 - s * p1 >= -1e-12 & R1 - s * p1 <= 1 + 1e-12 &
-         R1 + s * (1 - p1) >= -1e-12 & R1 + s * (1 - p1) <= 1 + 1e-12
-  ok0 <- R0 - s * ob$p0 >= -1e-12 & R0 - s * ob$p0 <= 1 + 1e-12 &
-         R0 + s * (1 - ob$p0) >= -1e-12 & R0 + s * (1 - ob$p0) <= 1 + 1e-12
-  ok1 & ok0
+# Additive model. delta is the average confounder-outcome risk difference
+# in the target population; it may vary with the covariates, delta(X). For
+# a person, delta(X) is feasible (both stratum risks r - delta p and
+# r + delta (1 - p) in [0, 1], in both arms) up to a limit U(X) >= 0, so an
+# average delta is feasible if and only if it is at most the weighted mean
+# of U(X). The bias of the standardized risk difference is
+# -(p1 - p0) * mean(delta(X)) whatever the pattern, so the correction
+# RD - delta (p1 - p0) is exact for every feasible delta(X) with that mean.
+.rd_person_limit <- function(r, p, dir) {
+  a <- if (p > 0) (if (dir > 0) r else 1 - r) / p else Inf
+  b <- if (p < 1) (if (dir > 0) 1 - r else r) / (1 - p) else Inf
+  pmin(a, b)
 }
-
-# Largest additive confounder effect (in the direction of the path) for
-# which the standardized stratum risks lie in [0, 1].
-.rd_max_delta <- function(ob, dir) {
-  R1 <- sum(ob$w * ob$r1); R0 <- sum(ob$w * ob$r0)
-  lim <- function(r, p) {
-    if (dir > 0) min(c(r / p, (1 - r) / (1 - p))[c(p > 0, p < 1)])
-    else min(c((1 - r) / p, r / (1 - p))[c(p > 0, p < 1)])
-  }
-  min(lim(R1, ob$p1), lim(R0, ob$p0))
+.rd_max_delta <- function(ob, dir, p1 = ob$p1) {
+  sum(ob$w * pmin(.rd_person_limit(ob$r1, p1, dir),
+                  .rd_person_limit(ob$r0, ob$p0, dir)))
+}
+.rd_add_ok <- function(ob, s, p1v) {
+  dir <- ifelse(s >= 0, 1, -1)
+  lim <- mapply(function(p, d) .rd_max_delta(ob, d, p), p1v, dir)
+  abs(s) <= lim + 1e-12
 }
 
 # Standardized risks, risk difference, and delta-method SE at strengths s
@@ -286,14 +285,14 @@
 #'   default a logistic regression of the treatment on the other terms of
 #'   the model.
 #'
-#' For the risk-difference model, \eqn{\delta} is read as an average
-#' confounder-outcome risk difference, as in the correction for a crude
-#' table, and a scenario is used only if the standardized risk in each arm,
-#' split into the two strata of \eqn{U}, lies in \eqn{[0, 1]}. (Requiring
-#' this for every person would rule out almost every scenario once some
-#' fitted risks are near 0 or 1.) The largest such strength is
-#' `meta$max_feasible`, the default grid stops there, and infeasible
-#' scenarios in a user grid are `NA`. The odds-ratio model never leaves
+#' For the risk-difference model, \eqn{\delta} is the average
+#' confounder-outcome risk difference in the target population; it may vary
+#' with the covariates. The correction \eqn{RD - \delta (p_1 - p_0)} is
+#' exact for any such pattern with average \eqn{\delta}. A value is used
+#' only if some pattern with that average keeps every person's risks in
+#' both strata of \eqn{U} within \eqn{[0, 1]}; the largest such value is
+#' the average of the person-level limits, `meta$max_feasible`. The default
+#' grid stops there, and infeasible scenarios in a user grid are `NA`. The odds-ratio model never leaves
 #' \eqn{[0, 1]}. Offsets in the model are kept.
 #' `threshold` may lie on either side of zero; the crossing is the strength
 #' at which the adjusted risk difference reaches it.
@@ -446,9 +445,10 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
   below <- s0 * (v$rd - thr) <= 0
   nsig <- s0 * v$rd - z * v$se <= 0
   gr$zone <- ifelse(is.na(v$rd), "Infeasible",
+             ifelse(below & s0 * thr < 0, "Past practical threshold",
              ifelse(past0, "Estimate at or past zero",
              ifelse(below, "Below practical threshold",
-             ifelse(nsig, "Not significant", NA_character_))))
+             ifelse(nsig, "Not significant", NA_character_)))))
   # Boundaries from contour lines of the grid values (each grid value is a
   # full g-computation, so no further root finding is done).
   cl_bnd <- function(v, kind, tag, style) {
@@ -461,7 +461,7 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
   }
   bnd <- rbind(
     cl_bnd(s0 * v$rd, "Null (risk difference = 0)", "n", "dashed"),
-    if (s0 * thr > 0) cl_bnd(s0 * (v$rd - thr),
+    if (thr != 0) cl_bnd(s0 * (v$rd - thr),
                              sprintf("Practical threshold (%s)", thr), "t", "dotdash"),
     cl_bnd(s0 * v$rd - z * v$se, sprintf("Significance (alpha = %s)", alpha),
            "s", "solid"))

@@ -21,21 +21,21 @@ This release includes the changes prepared as 0.3.1, which was not released.
   in the review of the 0.3.0 article. Scenarios that imply risks outside
   [0, 1] are not used, offsets are kept, the threshold may lie on either
   side of zero, and the report and plot use the level given in `alpha`.
-  For the risk-difference version, feasibility is judged on the
-  standardized risk in each arm split by the confounder, so a few fitted
-  risks near 0 or 1 do not rule out every scenario.
+  For the risk-difference version, the confounder-outcome risk difference
+  is an average that may vary with the covariates; a value is used only if
+  some such pattern keeps every person's risks in [0, 1], and the largest
+  such value is the average of the person-level limits. Prevalences of 0
+  or 1 are handled.
   The report says so in words when the estimate is already within the
   threshold without confounding, or when no confounder strength reaches
-  the threshold or zero (the bias is bounded for given prevalences).
+  the threshold or zero (the bias is bounded for given prevalences), and it
+  separates a baseline confidence interval that contains the threshold from
+  one entirely past it. Surfaces draw thresholds on either side of zero.
 * The README quick start now leads with this workflow on simulated data.
 * `plot_robustness_curve()` draws bands at the level stored in the path
   (for example 99% for a path built with `alpha = 0.01`), not always 95%.
-* The vignette has new sections on risk differences, instrumental
-  variables, and DoubleML.
-* Documentation: the `survival` column of `ATbounds::RHC` is described
-  there as 30-day survival, but it matches the death indicator over the
-  whole follow-up (about 180 days) of the Vanderbilt release; examples now
-  call the outcome death during follow-up.
+* The vignette has new sections on risk differences (simulated data),
+  instrumental variables, and DoubleML.
 
 * `from_iv_sensemakr()` imports the sensitivity analysis of instrumental
   variable estimates from 'iv.sensemakr' (Cinelli and Hazlett, 2025). The

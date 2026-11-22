@@ -168,7 +168,7 @@ test_that("report wording for thresholds already met or never reached", {
   expect_false(grepl("not reached brings", t2))
 })
 
-test_that("additive feasibility is judged on standardized risks", {
+test_that("additive feasibility is the average of person-level limits", {
   # one person with a fitted risk near 0 must not rule out every scenario
   set.seed(9); n <- 1500
   x <- rnorm(n); x[1] <- -12
@@ -177,8 +177,31 @@ test_that("additive feasibility is judged on standardized risks", {
   f <- glm(y ~ a + x, family = binomial, data = data.frame(y, a, x))
   r <- sens_risk_difference(f, "a", 0.4, 0.2, confounder_effect = "risk_difference")
   R <- r$meta$rd_setup
-  R1 <- mean(R$r1); R0 <- mean(R$r0)
-  expect_equal(r$meta$max_feasible,
-               min(R1 / 0.4, (1 - R1) / 0.6, R0 / 0.2, (1 - R0) / 0.8), tolerance = 1e-10)
+  U <- pmin(R$r1 / 0.4, (1 - R$r1) / 0.6, R$r0 / 0.2, (1 - R$r0) / 0.8)
+  expect_equal(r$meta$max_feasible, mean(U), tolerance = 1e-10)
   expect_gt(r$meta$max_feasible, 0.1)
+  expect_lt(min(U), 1e-3)
+  # endpoint prevalences: a zero denominator imposes no limit
+  r1 <- sens_risk_difference(f, "a", 1, 0, confounder_effect = "risk_difference")
+  expect_equal(r1$meta$max_feasible, mean(pmin(R$r1, 1 - R$r0)), tolerance = 1e-10)
+  r0 <- sens_risk_difference(f, "a", 0, 1, confounder_effect = "risk_difference")
+  expect_equal(r0$meta$max_feasible, mean(pmin(R$r1, 1 - R$r0)), tolerance = 1e-10)
+  expect_false(anyNA(r1$theta))
+})
+
+test_that("baseline interval past the threshold is told apart from overlap", {
+  f <- toy_fit()
+  past <- paste(sens_report(sens_risk_difference(f, "a", 0.4, 0.2, threshold = 0.2))$text,
+                collapse = " ")
+  expect_match(past, "entirely past the\\s+threshold")
+  over <- paste(sens_report(sens_risk_difference(f, "a", 0.4, 0.2, threshold = 0.04))$text,
+                collapse = " ")
+  expect_match(over, "includes the\\s+threshold")
+})
+
+test_that("surface draws a threshold on the far side of zero", {
+  r <- sens_risk_difference(toy_fit(), "a", 0.4, 0.2, threshold = -0.02)
+  s <- sens_surface(r, a = seq(0.3, 0.6, by = 0.025), b = seq(1, 20, by = 0.5))
+  expect_true(any(grepl("^Practical threshold", s$boundary$kind)))
+  expect_true(any(s$grid$zone == "Past practical threshold", na.rm = TRUE))
 })

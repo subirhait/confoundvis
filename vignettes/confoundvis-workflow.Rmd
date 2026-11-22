@@ -12,7 +12,6 @@ has_sm <- requireNamespace("sensemakr", quietly = TRUE)
 has_kf <- requireNamespace("konfound", quietly = TRUE)
 has_ev <- requireNamespace("EValue", quietly = TRUE)
 has_dos2 <- requireNamespace("DOS2", quietly = TRUE)
-has_atb <- requireNamespace("ATbounds", quietly = TRUE)
 has_iv <- requireNamespace("iv.sensemakr", quietly = TRUE)
 has_dml <- requireNamespace("DoubleML", quietly = TRUE) &&
   requireNamespace("mlr3learners", quietly = TRUE)
@@ -31,7 +30,8 @@ This vignette walks through the complete workflow:
 fitted model -> sensitivity path -> confoundsens object -> plots -> report
 ```
 
-using a real, publicly available dataset.
+The datasets below illustrate the workflow. For your own analysis, pass a
+fitted model or other supported input from your study.
 
 ## Data and model
 
@@ -213,25 +213,30 @@ returns the risk difference standardized to the study population, with a
 standard error, and it reports the odds ratios at which the risk difference
 reaches a practical threshold and zero.
 
-The right heart catheterization data (Connors et al., 1996) are distributed
-with **ATbounds**. Its `survival` column is documented there as 30-day
-survival, but it matches the death indicator over the whole follow-up of the
-original Vanderbilt release (death within about 180 days), so we call the
-outcome `death`.
+This example simulates a binary outcome, a binary treatment, and a measured
+baseline covariate. To apply the same workflow to your study, fit an unweighted
+binomial model with the `data` argument and pass the name of your binary
+treatment variable. Choose `p1`, `p0`, and the risk-difference threshold for
+your own analysis. The values below illustrate the function.
 
-```{r rd, eval = has_atb}
-data("RHC", package = "ATbounds")
-rhc <- as.data.frame(RHC)
-rhc$death <- 1 - rhc$survival        # death during follow-up (about 180 days)
-rhc$survival <- NULL
-fit_b <- glm(death ~ ., family = binomial, data = rhc)
-rd <- sens_risk_difference(fit_b, "RHC", p1 = 0.4, p0 = 0.2, threshold = 0.02)
+```{r rd, eval = TRUE}
+library(confoundvis)
+set.seed(104)
+n <- 2000
+example_data <- data.frame(baseline = rnorm(n))
+example_data$treated <- rbinom(n, 1, plogis(-0.2 + 0.5 * example_data$baseline))
+example_data$event <- rbinom(
+  n, 1, plogis(-1.5 + 0.45 * example_data$treated + 0.4 * example_data$baseline)
+)
+
+fit_b <- glm(event ~ treated + baseline, family = binomial(), data = example_data)
+rd <- sens_risk_difference(fit_b, "treated", p1 = 0.4, p0 = 0.2, threshold = 0.02)
 sens_report(rd)
 plot_robustness_curve(rd, points = FALSE)
 ```
 
-The dot-dash line is the practical threshold of 2 extra deaths per 100
-patients. The path shows how the conclusion changes across confounding
+The dot-dash line is the practical threshold of 2 extra events per 100
+people. The path shows how the conclusion changes across confounding
 scenarios; the band shows sampling error within each scenario. These are
 different sources of uncertainty, and the report keeps them apart. With no
 confounding, the estimate equals `marginaleffects::avg_comparisons()` for
@@ -363,10 +368,6 @@ Working Paper 30302.
 Cinelli, C., & Hazlett, C. (2025). An omitted variable bias framework for
 sensitivity analysis of instrumental variables. *Biometrika*, 112(2),
 asaf004.
-
-Connors, A. F., Speroff, T., Dawson, N. V., et al. (1996). The effectiveness
-of right heart catheterization in the initial care of critically ill
-patients. *JAMA*, 276(11), 889–897.
 
 Lin, D. Y., Psaty, B. M., & Kronmal, R. A. (1998). Assessing the sensitivity
 of regression results to unmeasured confounders in observational studies.

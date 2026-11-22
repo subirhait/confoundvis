@@ -228,7 +228,8 @@ sens_surface <- function(x, a = NULL, b = NULL, n = 201, alpha = 0.05) {
                 "Confidence interval includes 1"   = "#bdd7e7",
                 "Point estimate explained away"    = "#fcbba1",
                 "Upper-bound P-value at least 0.5" = "#fcbba1",
-                "Below practical threshold"        = "#fee6ce")
+                "Below practical threshold"        = "#fee6ce",
+                "Past practical threshold"         = "#fcbba1")
 
 # ---- partial R2 ------------------------------------------------------------
 .surf_pr2 <- function(m, a, b, n, alpha) {

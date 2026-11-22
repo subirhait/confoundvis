@@ -252,9 +252,15 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
         ci_t <- if (is.na(lc)) sprintf(paste0(
             "Allowing for sampling error (alpha = %s), the confidence limit ",
             "nearest zero does not reach the threshold."), alpha)
-          else if (lc <= lo) sprintf(paste0(
-            "Allowing for sampling error (alpha = %s), the confidence interval ",
-            "already includes the threshold without confounding."), alpha)
+          else if (lc <= lo) {
+            s0 <- if (meta$estimate >= 0) 1 else -1
+            past <- s0 * (meta$estimate - meta$rd_threshold) <
+              -stats::qnorm(1 - alpha / 2) * meta$se0
+            sprintf(paste0(
+              "Allowing for sampling error (alpha = %s), the confidence interval ",
+              "is already %s without confounding."), alpha,
+              if (past) "entirely past the threshold" else "includes the threshold")
+          }
           else sprintf(paste0(
             "Allowing for sampling error (alpha = %s), the confidence limit ",
             "nearest zero reaches the threshold at %s."), alpha, fmt(lc))

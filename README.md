@@ -96,19 +96,6 @@ instrumental-variable analysis from 'iv.sensemakr', or a `DoubleMLPLR` /
 `DoubleMLIRM` fit (with `store_predictions = TRUE`).
 
 ```r
-# binary outcome: risk difference with a practical threshold
-# (right heart catheterization data, Connors et al., 1996). ATbounds documents
-# `survival` as 30-day survival, but it matches the death indicator over the
-# whole follow-up (about 180 days) of the original Vanderbilt release.
-data("RHC", package = "ATbounds")
-rhc <- RHC
-rhc$death <- 1 - rhc$survival     # death during follow-up (about 180 days)
-rhc$survival <- NULL
-fit <- glm(death ~ ., family = binomial, data = rhc)
-rd <- sens_risk_difference(fit, "RHC", p1 = 0.4, p0 = 0.2, threshold = 0.02)
-sens_report(rd)
-plot_robustness_curve(rd)
-
 # instrumental variables
 data("card", package = "iv.sensemakr")
 xm <- model.matrix(~ exper + expersq + black + south + smsa + reg661 + reg662 +

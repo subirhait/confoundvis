@@ -44,7 +44,7 @@ Imports: ggplot2 (>= 3.4.0), rlang, graphics, grDevices, stats
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, sensemakr,
         konfound, EValue, DOS2, sensitivity2x2xk, sensitivitymv, ggrepel,
         iv.sensemakr, DoubleML, mlr3, mlr3learners, data.table, lgr,
-        marginaleffects, ATbounds
+        marginaleffects
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/subirhait/confoundvis
