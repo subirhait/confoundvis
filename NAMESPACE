@@ -35,18 +35,22 @@ export(sens_profile)
 export(sens_report)
 export(sens_surface)
 export(sens_table)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,coord_equal)
-importFrom(ggplot2,facet_wrap)
-importFrom(ggplot2,geom_line)
-importFrom(ggplot2,geom_path)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,geom_ribbon)
-importFrom(ggplot2,geom_text)
-importFrom(ggplot2,geom_vline)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,labs)
+importFrom(ggplot2,
+  aes,
+  coord_equal,
+  facet_wrap,
+  geom_line,
+  geom_path,
+  geom_point,
+  geom_ribbon,
+  geom_text,
+  geom_vline,
+  ggplot,
+  labs
+)
 importFrom(graphics,par)
 importFrom(rlang,.data)
-importFrom(stats,coef)
-importFrom(stats,lm)
+importFrom(stats,
+  coef,
+  lm
+)
