@@ -1,33 +1,18 @@
-## Update
+## Submission
 
-This is an update from confoundvis 0.2.0 to 0.3.0.
-
-* New: Rosenbaum bounds for matched pairs (`sens_path_pairs()`), robustness
-  of inference to replacement (`rir_lm()`), two-parameter sensitivity
-  surfaces (`sens_surface()`, `plot_sensitivity_surface()`), a summary
-  table (`sens_table()`), and an exact ITCV contour.
-* Removed exported functions: `fit_local_quadratic()`, `plot_local_taylor()`,
-  `plot_taylor_panels()`, `plot_figure2_taylor_panels()`,
-  `simulate_taylor_demo()`, `plot_reversal_cone()`, and
-  `plot_cone_comparison()`. These were stylized illustrations that did not
-  analyse data. The package has no reverse dependencies on CRAN.
-* 'grid' was removed from Imports and 'gridExtra' from Suggests.
-* All new Suggests packages ('DOS2', 'sensitivity2x2xk', 'sensitivitymv',
-  'ggrepel') are used conditionally in tests, examples, and the vignette.
-
-## Test environments
-
-* local Windows 11, R 4.6.0
-* win-builder R-devel and R-release (R 4.6.1)
-* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macos-latest,
-  windows-latest
+This is an update from 0.3.0 (accepted 2026-10-17). It fixes a bug: for
+ITCV, RIR, and Rosenbaum results, a significance level requested in
+robustness_points(), sens_report(), and sens_table() was ignored. It also adds
+confoundvis(), a one-call summary, and makes covariate_impacts() much faster.
+We release it now because the bug can give wrong reported results.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes
 
-## Notes on possibly flagged items
+* Local: Windows 11, R 4.6.0
+* win-builder: R-devel
 
-* "Possibly misspelled words in DESCRIPTION": Cinelli, Hazlett,
-  VanderWeele, and Rosenbaum are author surnames; "et al" is part of a
-  citation; "framework's" is a possessive. None are misspellings.
+## Reverse dependencies
+
+There are no reverse dependencies.
