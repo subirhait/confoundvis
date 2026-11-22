@@ -11,6 +11,12 @@
     (g[i] - g[i - 1L])
 }
 
+# Internal: TRUE when the significance rule of a path is fixed at the level
+# it was built with (a stored threshold, or stored confidence limits).
+.fixed_level <- function(meta) {
+  !is.null(meta$threshold) || !is.null(meta$ci_near)
+}
+
 # Internal: the significance level a path is evaluated at. Paths with a
 # stored threshold carry the level it was computed from; a different
 # requested level is refused rather than silently ignored.
@@ -20,7 +26,10 @@
        alpha <= 0 || alpha >= 1)) {
     stop("`alpha` must be NULL or a single number in (0, 1).", call. = FALSE)
   }
-  if (is.null(meta$threshold)) return(if (is.null(alpha)) 0.05 else alpha)
+  if (!.fixed_level(meta)) {
+    if (!is.null(alpha)) return(alpha)
+    return(if (is.null(meta$default_alpha)) 0.05 else meta$default_alpha)
+  }
   stored <- if (is.null(meta$alpha)) NA_real_ else as.numeric(meta$alpha)
   if (is.null(alpha)) return(stored)
   if (is.na(stored)) {
@@ -35,8 +44,9 @@
       itcv      = "itcv_lm(..., alpha = %s) or from_konfound(..., alpha = %s)",
       rir       = "rir_lm(..., alpha = %s) or from_konfound(..., alpha = %s)",
       rosenbaum = "sens_path_pairs(..., alpha = %s)%s",
+      iv        = "iv.sensemakr::sensemakr(..., alpha = %s)%s, then from_iv_sensemakr()",
       "the function that created it with alpha = %s%s")
-    how <- if (fw == "rosenbaum" || !fw %in% c("itcv", "rir"))
+    how <- if (!fw %in% c("itcv", "rir"))
       sprintf(how, alpha, "") else sprintf(how, alpha, alpha)
     stop(sprintf(paste0(
       "This %s path was built with alpha = %s, and its threshold is fixed at ",
@@ -56,8 +66,9 @@
 #' spacing of `lambda`.
 #'
 #' The significance criterion is chosen from what the object carries, in this
-#' order: a critical value on the `theta` scale in `meta$threshold` (ITCV
-#' paths); adjusted t statistics with residual degrees of freedom in
+#' order: bias-adjusted confidence limits in `meta$ci_near` (instrumental
+#' variable paths from [from_iv_sensemakr()]); a critical value on the
+#' `theta` scale in `meta$threshold` (ITCV paths); adjusted t statistics with residual degrees of freedom in
 #' `meta$dof` (partial \eqn{R^2} paths; critical value from a t distribution
 #' with `dof - 1` degrees of freedom, as in Cinelli and Hazlett, 2020);
 #' standard errors (normal critical value); or t statistics without degrees
@@ -68,8 +79,11 @@
 #' significance level when they are built, because the threshold is computed
 #' from it. For these paths `alpha` defaults to the stored level. Asking for a
 #' different level is an error: rebuild the path at the new level instead
-#' (for example `itcv_lm(model, treatment, alpha = 0.01)`). For other paths the
-#' default is 0.05. The level actually used is returned in column `alpha`.
+#' (for example `itcv_lm(model, treatment, alpha = 0.01)`). Instrumental
+#' variable paths are fixed at the level of the `iv.sensemakr` object in the
+#' same way. For other paths the default is the level stored in
+#' `meta$default_alpha` ([sens_dml()] stores the two-sided level that matches
+#' the one-sided `doubleml` level), or 0.05. The level actually used is returned in column `alpha`.
 #'
 #' @param alpha Significance level, or `NULL` (default) to use the level
 #'   stored in the path, if any, and 0.05 otherwise. Two-sided, except for
@@ -108,7 +122,10 @@ robustness_points <- function(x, alpha = NULL) {
 
     rule <- NA_character_
     lam_sig <- NA_real_
-    if (!is.null(meta$threshold)) {
+    if (!is.null(meta$ci_near)) {
+      lam_sig <- .first_crossing(la, s0 * (meta$ci_near[i] - null))
+      rule <- "adjusted confidence limit"
+    } else if (!is.null(meta$threshold)) {
       lam_sig <- .first_crossing(la, s0 * (th - meta$threshold))
       rule <- "theta threshold"
     } else if (!is.null(x$t) && !is.null(meta$dof) && is.finite(meta$dof)) {
@@ -192,6 +209,20 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
     else sprintf(
       "Estimate %s does not exceed the threshold %s; see konfound for the replacement needed to sustain an inference.",
       fmt(meta$estimate), fmt(meta$beta_threshold)))
+  } else if (fw == "iv" && !is.null(meta$rv)) {
+    txt <- c(txt, sprintf(paste0(
+      "IV estimate %s (Anderson-Rubin %s%% CI [%s, %s]); robustness value ",
+      "RV = %s; extreme robustness value XRV = %s (alpha = %s)."),
+      fmt(meta$estimate), 100 * (1 - meta$alpha), fmt(meta$ci_unadj[1]),
+      fmt(meta$ci_unadj[2]), fmt(meta$rv), fmt(meta$xrv), meta$alpha))
+  } else if (fw == "dml" && !is.null(meta$rv)) {
+    txt <- c(txt, sprintf(paste0(
+      "DoubleML %s (%s score) estimate %s; bias scale S = %s; rho = %s. ",
+      "RV = %s; RVa = %s at one-sided level %s (two-sided alpha = %s)."),
+      toupper(meta$model), meta$score, fmt(meta$estimate), fmt(meta$max_bias),
+      meta$rho, if (is.na(meta$rv)) "not reached" else fmt(meta$rv),
+      if (is.na(meta$rva)) "not reached" else fmt(meta$rva), meta$level,
+      meta$default_alpha))
   } else if (fw == "rosenbaum" && !is.null(meta$statistic)) {
     txt <- c(txt, sprintf(
       "Matched pairs: %s (%s with nonzero difference); %s = %s; sensitivity value %s (one-sided alpha = %s).",
@@ -234,9 +265,10 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
       txt <- c(txt, sprintf("%s%s; %s.", pre, r1, r2))
       next
     }
+    what <- if (fw %in% c("iv", "dml")) "the bias-adjusted bound" else "the point estimate"
     s1 <- if (is.na(p$lambda_null))
-      sprintf("the point estimate does not reach the null for lambda <= %s", fmt(max_l))
-    else sprintf("the point estimate reaches the null at lambda = %s", fmt(p$lambda_null))
+      sprintf("%s does not reach the null for lambda <= %s", what, fmt(max_l))
+    else sprintf("%s reaches the null at lambda = %s", what, fmt(p$lambda_null))
     s2 <- if (is.na(p$sig_rule)) "no uncertainty information is available"
     else if (is.na(p$lambda_sig))
       sprintf("significance (alpha = %s) holds for lambda <= %s", alpha, fmt(max_l))

@@ -18,21 +18,26 @@ adds no new sensitivity parameter or measure.
 | Robustness of inference to replacement (RIR) | Frank et al. (2013) | `rir_lm()`, `from_konfound(index = "RIR")` | `konfound` |
 | E-value | VanderWeele & Ding (2017) | `from_evalue()` | `EValue` |
 | Rosenbaum bounds, matched pairs | Rosenbaum (2002) | `sens_path_pairs()` | `DOS2`, `sensitivity2x2xk`, `sensitivitymv` |
+| Instrumental variables (Anderson–Rubin) | Cinelli & Hazlett (2025) | `from_iv_sensemakr()` | `iv.sensemakr` |
+| Double machine learning (PLR, IRM-ATE) | Chernozhukov et al. (2024) | `sens_dml()` for R `DoubleML` fits | Python `doubleml` |
 
 ## Common and framework-specific tools
 
-| Tool | Partial R² | ITCV | RIR | E-value | Rosenbaum |
-|---|:-:|:-:|:-:|:-:|:-:|
-| `plot_robustness_curve()`, `robustness_points()` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `sens_table()` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `sens_report()` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `sens_surface()`, `plot_sensitivity_surface()` | ✓ | ✓ | – | ✓ | ✓ |
-| `covariate_impacts()`, `plot_sensitivity_love()` | ✓ | ✓ | – | – | – |
-| `plot_sensitivity_contour()` (exact correlation contour) | – | ✓ | – | – | – |
+| Tool | Partial R² | ITCV | RIR | E-value | Rosenbaum | IV | DML |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `plot_robustness_curve()`, `robustness_points()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_table()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_report()` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `sens_surface()`, `plot_sensitivity_surface()` | ✓ | ✓ | – | ✓ | ✓ | ✓ | ✓ |
+| `covariate_impacts()`, `plot_sensitivity_love()` | ✓ | ✓ | – | – | – | – | – |
+| `plot_sensitivity_contour()` (exact correlation contour) | – | ✓ | – | – | – | – | – |
 
 RIR has a single sensitivity parameter, so it has no two-parameter surface.
 Covariate benchmarks need a fitted linear model, so they are not available for
-E-values or matched pairs.
+E-values or matched pairs. For instrumental variables, the benchmark bounds
+computed by `iv.sensemakr` are shown on the surface. The R package `DoubleML`
+has no sensitivity analysis; `sens_dml()` computes the one of the Python
+package `doubleml` from a fit with stored predictions and agrees with it.
 
 ## Installation
 
@@ -55,7 +60,27 @@ plot(res, which = "benchmarks") # measured covariates
 ```
 
 `confoundvis()` also accepts a logistic regression (RIR through
-'konfound') or a vector of matched-pair differences (Rosenbaum bounds).
+'konfound'), a vector of matched-pair differences (Rosenbaum bounds), an
+instrumental-variable analysis from 'iv.sensemakr', or a `DoubleMLPLR` /
+`DoubleMLIRM` fit (with `store_predictions = TRUE`).
+
+```r
+# instrumental variables
+data("card", package = "iv.sensemakr")
+xm <- model.matrix(~ exper + expersq + black + south + smsa + reg661 + reg662 +
+                     reg663 + reg664 + reg665 + reg666 + reg667 + reg668 + smsa66,
+                   data = card)
+iv <- iv.sensemakr::iv_fit(card$lwage, card$educ, card$nearc4, xm)
+confoundvis(iv.sensemakr::sensemakr(iv, benchmark_covariates = c("black", "smsa")))
+
+# double machine learning
+library(DoubleML)
+dat <- make_plr_CCDDHNR2018(n_obs = 500, return_type = "data.table")
+plr <- DoubleMLPLR$new(DoubleMLData$new(dat, y_col = "y", d_cols = "d"),
+                       ml_l = mlr3::lrn("regr.lm"), ml_m = mlr3::lrn("regr.lm"))
+plr$fit(store_predictions = TRUE)
+confoundvis(plr)
+```
 The functions below give finer control.
 
 ## Example

@@ -27,6 +27,8 @@
 #' | `itcv` | \eqn{r_{DU \mid X}} | \eqn{r_{YU \mid X}} | adjusted partial correlation |
 #' | `evalue` | \eqn{RR_{UD}} | \eqn{RR_{UY}} | bound on the risk ratio |
 #' | `rosenbaum` | \eqn{\Lambda} | \eqn{\Delta} | implied \eqn{\Gamma} |
+#' | `iv` | \eqn{R^2_{Z \sim W \mid X}} | \eqn{R^2_{Y_0 \sim W \mid Z, X}} | adjusted Anderson--Rubin limit nearest the null |
+#' | `dml` | `cf_d` | `cf_y` | bias-adjusted bound nearest the null |
 #'
 #' Each surface carries boundaries computed from the published formula of the
 #' framework, in closed form where one exists and otherwise by root finding
@@ -52,20 +54,27 @@
 #' equivalent confounders shown by `EValue::bias_plot()`, and the Rosenbaum
 #' surface gives the pairs returned by `sensitivitymv::amplify()`. The ITCV
 #' surface plots the adjusted partial correlation of Frank (2000) over both
-#' correlations. The surface only evaluates these published formulas. It
+#' correlations. The instrumental-variable surface is the plane of
+#' `iv.sensemakr::ovb_contour_plot()` (Cinelli and Hazlett, 2025), with the
+#' benchmark bounds of the `iv.sensemakr` object; its boundaries are where
+#' the adjusted Anderson--Rubin limit nearest the null (solid) and the bound
+#' on the estimate (dashed) reach the null. The DoubleML surface is the
+#' plane of `doubleml`'s `sensitivity_plot()` (Chernozhukov et al., 2024). The surface only evaluates these published formulas. It
 #' reports no area or share of the plane: the size of a shaded zone depends
 #' on the chosen axis ranges and has no inferential meaning.
 #'
 #' @param x A `confoundsens` object produced by [sens_path_lm()],
 #'   [from_sensemakr()], [itcv_lm()] (its `$path`), [from_konfound()] with
-#'   `index = "IT"`, [from_evalue()], or [sens_path_pairs()].
+#'   `index = "IT"`, [from_evalue()], [sens_path_pairs()],
+#'   [from_iv_sensemakr()], or [sens_dml()].
 #' @param a,b Optional numeric grids for the two axes. Defaults depend on
 #'   the framework and extend beyond the relevant boundary.
 #' @param n Number of grid points per axis when `a` or `b` is not supplied.
-#' @param alpha Significance level for the partial-\eqn{R^2} boundary.
-#'   ITCV and Rosenbaum paths use the level stored in the path (a warning is
-#'   given if `alpha` is supplied); for E-values the boundary is defined by
-#'   the stored confidence limit.
+#' @param alpha Significance level for the partial-\eqn{R^2} and DoubleML
+#'   boundaries (for DoubleML, the default is the level stored by
+#'   [sens_dml()]). ITCV, Rosenbaum, and instrumental-variable paths use the
+#'   level stored in the path (a warning is given if `alpha` is supplied);
+#'   for E-values the boundary is defined by the stored confidence limit.
 #'
 #' @return An object of class `confoundsurf`: a list with `grid` (a data
 #'   frame with columns `a`, `b`, `value`, and `zone`), `boundary` (a data
@@ -116,7 +125,7 @@ sens_surface <- function(x, a = NULL, b = NULL, n = 201, alpha = 0.05) {
   }
   n <- as.integer(n)
   fw <- if (is.null(x$meta$framework)) "" else x$meta$framework
-  if (fw %in% c("itcv", "rosenbaum") && !missing(alpha)) {
+  if (fw %in% c("itcv", "rosenbaum", "iv") && !missing(alpha)) {
     warning("`alpha` is ignored for ", fw, " paths; the level stored in the ",
             "path is used.", call. = FALSE)
   }
@@ -125,10 +134,13 @@ sens_surface <- function(x, a = NULL, b = NULL, n = 201, alpha = 0.05) {
     itcv       = .surf_itcv(x$meta, a, b, n),
     evalue     = .surf_evalue(x$meta, a, b, n),
     rosenbaum  = .surf_rosenbaum(x, a, b, n),
+    iv         = .surf_iv(x$meta, a, b, n),
+    dml        = .surf_dml(x$meta, a, b, n, if (missing(alpha)) NULL else alpha),
     rir        = stop("RIR has a single sensitivity parameter; there is no ",
                       "two-parameter surface.", call. = FALSE),
     stop("sens_surface() needs a path from sens_path_lm(), from_sensemakr(), ",
-         "itcv_lm(), from_konfound(), from_evalue(), or sens_path_pairs().",
+         "itcv_lm(), from_konfound(), from_evalue(), sens_path_pairs(), ",
+         "from_iv_sensemakr(), or sens_dml().",
          call. = FALSE))
   out$meta$framework <- fw
   out$meta$treatment <- x$meta$treatment
@@ -383,6 +395,37 @@ sens_surface <- function(x, a = NULL, b = NULL, n = 201, alpha = 0.05) {
                    sens_value = sv, gamma_half = g_half, alpha = m$alpha))
 }
 
+# ---- instrumental variables (iv.sensemakr) ---------------------------------
+.surf_iv <- function(m, a, b, n) {
+  p <- m$iv_parts; h0 <- m$null; est <- m$estimate; al <- m$alpha
+  s0 <- if (est >= h0) 1 else -1
+  top <- min(0.99, max(0.02, 3 * max(m$rv, m$rv_point)))
+  if (is.null(a)) a <- seq(0, top, length.out = n) else a <- .check_grid(a, 0, 0.999, "a")
+  if (is.null(b)) b <- seq(0, top, length.out = n) else b <- .check_grid(b, 0, 0.999, "b")
+  big <- 1e6 * max(1, abs(est))
+  gfun <- function(alpha) function(aa, bb) {
+    v <- s0 * (.iv_near(p, aa, bb, alpha, s0) - h0)
+    v[is.na(v)] <- -big
+    pmin(pmax(v, -big), big)
+  }
+  gr <- expand.grid(a = a, b = b)
+  gr$value <- .iv_near(p, gr$a, gr$b, al, s0)
+  g_pt <- gfun(1)(gr$a, gr$b); g_ci <- gfun(al)(gr$a, gr$b)
+  gr$zone <- ifelse(g_pt <= 0, "Estimate at or past zero",
+             ifelse(g_ci <= 0, "Not significant", NA_character_))
+  K  <- 4L * n
+  ga <- seq(0, min(max(a), 0.999), length.out = K)
+  gb <- seq(0, min(max(b), 0.999), length.out = K)
+  bnd <- rbind(
+    .trace_zero(gfun(1), ga, gb, sprintf("Null (bound = %s)", h0), "n", "dashed"),
+    .trace_zero(gfun(al), ga, gb, sprintf("Significance (alpha = %s)", al), "s", "solid"))
+  list(grid = gr, boundary = bnd,
+       meta = list(a_label = "Partial R2 of W with instrument",
+                   b_label = "Partial R2 of W with Y(0)",
+                   value_label = "Adjusted Anderson-Rubin limit nearest the null",
+                   estimate = est, null = h0, rv = m$rv, xrv = m$xrv, alpha = al))
+}
+
 #' @export
 print.confoundsurf <- function(x, ...) {
   m <- x$meta
@@ -454,6 +497,11 @@ plot_sensitivity_surface <- function(x, benchmarks = NULL, bounds = TRUE) {
     bb <- m$bounds
     pts <- rbind(pts, data.frame(a = bb$r2dz.x, b = bb$r2yz.dx,
                                  label = bb$bound_label, stringsAsFactors = FALSE))
+  } else if (isTRUE(bounds) && !is.null(m$bounds) &&
+             all(c("a", "b", "label") %in% names(m$bounds))) {
+    bb <- m$bounds
+    pts <- rbind(pts, data.frame(a = bb$a, b = bb$b, label = bb$label,
+                                 stringsAsFactors = FALSE))
   }
   if (!is.null(pts) && nrow(pts)) {
     p <- p + ggplot2::geom_point(data = pts,

@@ -11,6 +11,8 @@
     evalue     = list(name = "E-value (point)",          value = meta$evalue),
     rosenbaum  = list(name = "Sensitivity value (Gamma)", value = meta$sens_value),
     rir        = list(name = "RIR (cases)",              value = meta$rir),
+    iv         = list(name = "RV (Anderson-Rubin)",      value = meta$rv),
+    dml        = list(name = "RVa (DoubleML)",           value = meta$rva),
     list(name = NA_character_, value = NA_real_))
 }
 
@@ -67,7 +69,7 @@ sens_table <- function(..., alpha = NULL) {
   rows <- lapply(seq_along(paths), function(i) {
     x  <- validate_confoundsens(paths[[i]])
     m  <- x$meta
-    rp <- robustness_points(x, alpha = if (is.null(m$threshold)) alpha else NULL)
+    rp <- robustness_points(x, alpha = if (.fixed_level(m)) NULL else alpha)
     fs <- .framework_summary(m)
     data.frame(
       path          = nm[i],

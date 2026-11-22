@@ -9,7 +9,11 @@
 #'   [as_confoundsens()].
 #' @param what Character; which path to plot: `"theta"` (default) or `"t"`.
 #' @param bands Logical; if `TRUE` and `x$se` is present, draw 95% pointwise
-#'   confidence bands (applies only when `what = "theta"`).
+#'   confidence bands (applies only when `what = "theta"`). Paths from
+#'   [from_iv_sensemakr()] and [sens_dml()] carry their own confidence limits
+#'   (bias-adjusted Anderson--Rubin limits; `doubleml` limits of the lower
+#'   and upper bounds), which are drawn instead, and the vertical range is
+#'   set from the unadjusted interval because these limits can be infinite.
 #' @param points Logical; if `TRUE`, overlay points on the line.
 #' @param reference Logical; if `TRUE` (default) and `x$meta` records a null
 #'   value (`meta$null`) or a critical value (`meta$threshold`), draw them as
@@ -67,6 +71,20 @@ plot_robustness_curve <- function(x,
   df$hi <- df$y + 1.96 * df$se
 
   meta <- x$meta
+  # Paths that carry their own confidence limits (instrumental variables,
+  # DoubleML) are drawn with those limits rather than +/- 1.96 SE. These
+  # limits can grow without bound, so the vertical range is fixed from the
+  # unadjusted interval and the null.
+  ylim <- NULL
+  if (what == "theta" && length(meta$ci_lower) == n && length(meta$ci_upper) == n) {
+    base <- range(c(df$y[1L], meta$ci_lower[1L], meta$ci_upper[1L], meta$null),
+                  finite = TRUE)
+    w <- max(diff(base), 1e-8)
+    ylim <- base + c(-1, 1) * w
+    df$lo <- pmax(meta$ci_lower, ylim[1] - w)
+    df$hi <- pmin(meta$ci_upper, ylim[2] + w)
+    df$se <- ifelse(is.na(df$lo) | is.na(df$hi), NA_real_, 1)
+  }
   ylab <- if (what == "theta") {
     if (!is.null(meta$theta_label)) meta$theta_label else expression(theta(lambda))
   } else expression(t(lambda))
@@ -104,6 +122,7 @@ plot_robustness_curve <- function(x,
   if (isTRUE(facet_level) && !is.null(x$level)) {
     p <- p + ggplot2::facet_wrap(~ .data$level, scales = "free_y")
   }
+  if (!is.null(ylim)) p <- p + ggplot2::coord_cartesian(ylim = ylim)
 
   p
 }

@@ -19,6 +19,14 @@
 #'   \item A numeric vector: treated as treated-minus-control differences in
 #'     matched pairs, analysed with Rosenbaum's sensitivity model
 #'     ([sens_path_pairs()]; one-sided test).
+#'   \item An instrumental-variable analysis from `iv.sensemakr`
+#'     (an `iv_fit()` or `sensemakr()` result): the sensitivity of the
+#'     Anderson--Rubin inference ([from_iv_sensemakr()]).
+#'   \item A `DoubleMLPLR` or `DoubleMLIRM` fit from `DoubleML`, fitted with
+#'     `store_predictions = TRUE`: the omitted-variable-bias analysis of
+#'     Chernozhukov et al. ([sens_dml()]), with `rho = 1` and the one-sided
+#'     level `1 - alpha / 2`, so that its significance crossing matches a
+#'     two-sided test at `alpha`.
 #' }
 #'
 #' Each analysis keeps its own sensitivity parameter and decision rule. The
@@ -26,18 +34,21 @@
 #' another. A sensitivity analysis shows how strong an unmeasured
 #' confounder would need to be; it does not show whether one exists.
 #'
-#' @param x A fitted `lm` or `glm` object, or a numeric vector of matched-pair
-#'   differences.
+#' @param x A fitted `lm` or `glm` object, a numeric vector of matched-pair
+#'   differences, an `iv.sensemakr` `iv_fit` or `sensemakr` result, or a
+#'   fitted `DoubleMLPLR` or `DoubleMLIRM` object.
 #' @param treatment Name of the treatment coefficient (for a model).
 #' @param alpha Significance level (two-sided for models, one-sided for
-#'   matched pairs).
+#'   matched pairs). For an `iv.sensemakr` `sensemakr()` result, the level of
+#'   that object is used unless `alpha` is given, in which case the analysis
+#'   is rerun at `alpha`.
 #' @param labels Optional named character vector of readable covariate
 #'   labels, passed to [covariate_impacts()].
 #' @param extra Optional named list of further `confoundsens` paths (for
 #'   example from [from_evalue()]) to add for a linear model.
 #'
 #' @return An object of class `confoundvis_result`: a list with `type`
-#'   (`"lm"`, `"glm"`, or `"pairs"`), `treatment`, `paths` (named list of
+#'   (`"lm"`, `"glm"`, `"pairs"`, `"iv"`, or `"dml"`), `treatment`, `paths` (named list of
 #'   `confoundsens` objects), `table` ([sens_table()] output), `benchmarks`
 #'   (for `"lm"`: the [covariate_impacts()] results for the two metrics),
 #'   `profile` (for `"lm"`), and `summary` (the plain-language lines).
@@ -60,6 +71,28 @@ confoundvis <- function(x, treatment = NULL, alpha = 0.05, labels = NULL,
     p <- sens_path_pairs(x, gamma = seq(1, 20, by = 0.01), alpha = alpha)
     paths <- list(rosenbaum = p)
     out <- list(type = "pairs", treatment = NA_character_, paths = paths,
+                table = sens_table(paths), benchmarks = NULL, profile = NULL)
+  } else if (inherits(x, c("iv.sensemakr", "iv_fit"))) {
+    if (!requireNamespace("iv.sensemakr", quietly = TRUE)) {
+      stop("Package 'iv.sensemakr' is needed for this input.", call. = FALSE)
+    }
+    if (inherits(x, "iv_fit")) {
+      x <- iv.sensemakr::sensemakr(x, alpha = alpha)
+    } else if (!missing(alpha) && abs(alpha - x$pars$alpha) > 1e-12) {
+      pr <- x$pars
+      x <- iv.sensemakr::sensemakr(x$unadjusted,
+                                   benchmark_covariates = pr$benchmark_covariates,
+                                   kz = pr$kz, ky = pr$ky, kd = pr$kd,
+                                   q = pr$q, alpha = alpha)
+    }
+    alpha <- x$pars$alpha
+    paths <- list(iv = from_iv_sensemakr(x))
+    out <- list(type = "iv", treatment = paths$iv$meta$treatment, paths = paths,
+                table = sens_table(paths), benchmarks = NULL, profile = NULL)
+  } else if (inherits(x, "DoubleML")) {
+    paths <- list(dml = sens_dml(x, level = 1 - alpha / 2,
+                                 treatment = treatment))
+    out <- list(type = "dml", treatment = paths$dml$meta$treatment, paths = paths,
                 table = sens_table(paths), benchmarks = NULL, profile = NULL)
   } else if (inherits(x, "glm")) {
     if (is.null(treatment)) stop("Give the name of the treatment coefficient.", call. = FALSE)
@@ -88,8 +121,9 @@ confoundvis <- function(x, treatment = NULL, alpha = 0.05, labels = NULL,
     out <- list(type = "lm", treatment = treatment, paths = prof$paths,
                 table = prof$table, benchmarks = bench, profile = prof)
   } else {
-    stop("`x` must be a fitted lm or glm model, or a numeric vector of ",
-         "matched-pair differences.", call. = FALSE)
+    stop("`x` must be a fitted lm or glm model, a numeric vector of ",
+         "matched-pair differences, an iv.sensemakr result, or a fitted ",
+         "DoubleMLPLR or DoubleMLIRM object.", call. = FALSE)
   }
   out$alpha <- alpha
   out$summary <- .cv_summary(out)
@@ -128,6 +162,17 @@ confoundvis <- function(x, treatment = NULL, alpha = 0.05, labels = NULL,
         "E-value: a confounder with a risk ratio of %s with both treatment ",
         "and outcome could explain away the estimate; %s would move the ",
         "confidence limit to the null."), f(rw$lambda_null), f(rw$lambda_sig)),
+      iv = sprintf(paste0(
+        "Instrumental variables (Anderson-Rubin): an omitted variable explaining ",
+        "%s of the residual variance of both the instrument and the outcome ",
+        "would make the estimate nonsignificant (robustness value); %s would ",
+        "move the bound on the estimate itself to the null."),
+        pct(m$rv), pct(m$rv_point)),
+      dml = sprintf(paste0(
+        "DoubleML (rho = %s): a confounder with cf_y = cf_d = %s would move the ",
+        "bias-adjusted bound to the null (RV); %s would make it ",
+        "nonsignificant at alpha = %s (RVa)."),
+        f(m$rho), pct(m$rv), pct(rw$lambda_sig), f(rw$alpha)),
       rosenbaum = sprintf(paste0(
         "Rosenbaum: the result stays significant (one-sided alpha = %s) ",
         "unless a hidden factor could make one unit in a pair %s times as ",

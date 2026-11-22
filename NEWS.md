@@ -1,4 +1,35 @@
-# confoundvis 0.3.1
+# confoundvis 0.4.0
+
+This release includes the changes prepared as 0.3.1, which was not released.
+
+## New frameworks
+
+* `from_iv_sensemakr()` imports the sensitivity analysis of instrumental
+  variable estimates from 'iv.sensemakr' (Cinelli and Hazlett, 2025). The
+  path follows the equal-strength line on which 'iv.sensemakr' defines its
+  robustness value and reproduces it, together with the extreme robustness
+  value and the benchmark bounds. Significance is judged from the
+  bias-adjusted Anderson-Rubin confidence limits, which stay valid with a
+  weak instrument and can be unbounded.
+* `sens_dml()` computes the omitted-variable-bias analysis of Chernozhukov
+  et al. (2024) for `DoubleMLPLR` and `DoubleMLIRM` (ATE) fits from the R
+  package 'DoubleML', which does not provide it. It follows the Python
+  package 'doubleml' (0.11) formula by formula, including its aggregation
+  over repeated sample splits, and agrees with it to machine precision for
+  the bounds and confidence limits (robustness values to the tolerance of
+  the Python optimizer). The fit needs `store_predictions = TRUE`.
+* `sens_surface()` and `plot_sensitivity_surface()` support both: the plane
+  of the two partial R2 values for instrumental variables (with the
+  'iv.sensemakr' benchmark bounds) and the plane of `cf_d` and `cf_y` for
+  DoubleML.
+* `confoundvis()` accepts 'iv.sensemakr' results and DoubleML fits.
+* `plot_robustness_curve()` draws the stored confidence limits of these
+  paths instead of +/- 1.96 standard errors.
+* `robustness_points()` has a new rule, "adjusted confidence limit", and
+  uses a default level stored in the path (`meta$default_alpha`) when
+  there is one. `sens_table()` reports RV for instrumental variables and
+  RVa for DoubleML.
+
 
 ## Bug fixes
 
