@@ -167,3 +167,18 @@ test_that("report wording for thresholds already met or never reached", {
   expect_match(t2, "No odds ratio brings the risk\\s+difference to zero")
   expect_false(grepl("not reached brings", t2))
 })
+
+test_that("additive feasibility is judged on standardized risks", {
+  # one person with a fitted risk near 0 must not rule out every scenario
+  set.seed(9); n <- 1500
+  x <- rnorm(n); x[1] <- -12
+  a <- rbinom(n, 1, 0.5)
+  y <- rbinom(n, 1, plogis(-0.5 + 0.6 * a + 0.8 * x))
+  f <- glm(y ~ a + x, family = binomial, data = data.frame(y, a, x))
+  r <- sens_risk_difference(f, "a", 0.4, 0.2, confounder_effect = "risk_difference")
+  R <- r$meta$rd_setup
+  R1 <- mean(R$r1); R0 <- mean(R$r0)
+  expect_equal(r$meta$max_feasible,
+               min(R1 / 0.4, (1 - R1) / 0.6, R0 / 0.2, (1 - R0) / 0.8), tolerance = 1e-10)
+  expect_gt(r$meta$max_feasible, 0.1)
+})

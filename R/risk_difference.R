@@ -35,24 +35,32 @@
     dP <- (q * d1 + (1 - q) * d0) / (p * d1 + (1 - p) * d0)
     list(P = P, dP = dP)
   } else {
-    # stratum risks h (U = 0) and h + delta (U = 1) must be probabilities
-    h <- r - s * p
-    if (any(h < -1e-12 | h > 1 + 1e-12 | h + s < -1e-12 | h + s > 1 + 1e-12)) {
-      return(list(P = rep(NA_real_, length(r)), dP = rep(NA_real_, length(r))))
-    }
     list(P = r + s * (q - p), dP = rep(1, length(r)))
   }
 }
 
+# Additive model: the standardized risk in each arm, split into the two
+# strata of U (risk - delta p and risk + delta (1 - p)), must lie in [0, 1].
+# Checked on the standardized risks, so delta is read as an average
+# confounder-outcome risk difference, as in the crude-table correction.
+.rd_add_ok <- function(ob, s, p1) {
+  R1 <- sum(ob$w * ob$r1); R0 <- sum(ob$w * ob$r0)
+  ok1 <- R1 - s * p1 >= -1e-12 & R1 - s * p1 <= 1 + 1e-12 &
+         R1 + s * (1 - p1) >= -1e-12 & R1 + s * (1 - p1) <= 1 + 1e-12
+  ok0 <- R0 - s * ob$p0 >= -1e-12 & R0 - s * ob$p0 <= 1 + 1e-12 &
+         R0 + s * (1 - ob$p0) >= -1e-12 & R0 + s * (1 - ob$p0) <= 1 + 1e-12
+  ok1 & ok0
+}
+
 # Largest additive confounder effect (in the direction of the path) for
-# which every stratum risk lies in [0, 1].
+# which the standardized stratum risks lie in [0, 1].
 .rd_max_delta <- function(ob, dir) {
+  R1 <- sum(ob$w * ob$r1); R0 <- sum(ob$w * ob$r0)
   lim <- function(r, p) {
-    # need r - s p in [0, 1] and r + s (1 - p) in [0, 1], s = dir * delta
     if (dir > 0) min(c(r / p, (1 - r) / (1 - p))[c(p > 0, p < 1)])
     else min(c((1 - r) / p, r / (1 - p))[c(p > 0, p < 1)])
   }
-  min(lim(ob$r1, ob$p1), lim(ob$r0, ob$p0))
+  min(lim(R1, ob$p1), lim(R0, ob$p0))
 }
 
 # Standardized risks, risk difference, and delta-method SE at strengths s
@@ -80,6 +88,10 @@
       g <- crossprod(ob$X1, G1) - crossprod(ob$X0, G0)
       out[ch, 4] <- sqrt(pmax(colSums(g * (ob$V %*% g)), 0))
     }
+  }
+  if (ob$type == "risk_difference") {
+    bad <- !.rd_add_ok(ob, s, p1v)
+    out[bad, ] <- NA_real_
   }
   out[, 3] <- out[, 1] - out[, 2]
   as.data.frame(out)
@@ -274,10 +286,15 @@
 #'   default a logistic regression of the treatment on the other terms of
 #'   the model.
 #'
-#' For the risk-difference model, a scenario is used only if every implied
-#' stratum risk lies in \eqn{[0, 1]}; the largest such strength is
+#' For the risk-difference model, \eqn{\delta} is read as an average
+#' confounder-outcome risk difference, as in the correction for a crude
+#' table, and a scenario is used only if the standardized risk in each arm,
+#' split into the two strata of \eqn{U}, lies in \eqn{[0, 1]}. (Requiring
+#' this for every person would rule out almost every scenario once some
+#' fitted risks are near 0 or 1.) The largest such strength is
 #' `meta$max_feasible`, the default grid stops there, and infeasible
-#' scenarios in a user grid are `NA`. Offsets in the model are kept.
+#' scenarios in a user grid are `NA`. The odds-ratio model never leaves
+#' \eqn{[0, 1]}. Offsets in the model are kept.
 #' `threshold` may lie on either side of zero; the crossing is the strength
 #' at which the adjusted risk difference reaches it.
 #'

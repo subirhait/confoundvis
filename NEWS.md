@@ -21,6 +21,9 @@ This release includes the changes prepared as 0.3.1, which was not released.
   in the review of the 0.3.0 article. Scenarios that imply risks outside
   [0, 1] are not used, offsets are kept, the threshold may lie on either
   side of zero, and the report and plot use the level given in `alpha`.
+  For the risk-difference version, feasibility is judged on the
+  standardized risk in each arm split by the confounder, so a few fitted
+  risks near 0 or 1 do not rule out every scenario.
   The report says so in words when the estimate is already within the
   threshold without confounding, or when no confounder strength reaches
   the threshold or zero (the bias is bounded for given prevalences).
