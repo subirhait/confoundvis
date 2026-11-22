@@ -12,6 +12,10 @@ has_sm <- requireNamespace("sensemakr", quietly = TRUE)
 has_kf <- requireNamespace("konfound", quietly = TRUE)
 has_ev <- requireNamespace("EValue", quietly = TRUE)
 has_dos2 <- requireNamespace("DOS2", quietly = TRUE)
+has_atb <- requireNamespace("ATbounds", quietly = TRUE)
+has_iv <- requireNamespace("iv.sensemakr", quietly = TRUE)
+has_dml <- requireNamespace("DoubleML", quietly = TRUE) &&
+  requireNamespace("mlr3learners", quietly = TRUE)
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
                       fig.width = 6.5, fig.height = 4, eval = has_sm)
 ```
@@ -198,6 +202,74 @@ plot_robustness_curve(p_gam, points = FALSE)
 The result agrees with `DOS2::senWilcox()`. For a binary outcome, use
 `method = "binary"`, which applies the exact bound for McNemar's statistic.
 
+## Binary outcomes: risk differences and a practical threshold
+
+For a binary outcome analysed with logistic regression, a decision often
+rests on the absolute size of an effect, not only on its sign.
+`sens_risk_difference()` describes a hypothetical binary confounder by its
+prevalence among the treated (`p1`) and untreated (`p0`) and its odds ratio
+with the outcome (Lin, Psaty, and Kronmal, 1998). For each odds ratio it
+returns the risk difference standardized to the study population, with a
+standard error, and it reports the odds ratios at which the risk difference
+reaches a practical threshold and zero.
+
+The right heart catheterization data (Connors et al., 1996) are distributed
+with **ATbounds**. Its `survival` column is documented there as 30-day
+survival, but it matches the death indicator over the whole follow-up of the
+original Vanderbilt release (death within about 180 days), so we call the
+outcome `death`.
+
+```{r rd, eval = has_atb}
+data("RHC", package = "ATbounds")
+rhc <- as.data.frame(RHC)
+rhc$death <- 1 - rhc$survival        # death during follow-up (about 180 days)
+rhc$survival <- NULL
+fit_b <- glm(death ~ ., family = binomial, data = rhc)
+rd <- sens_risk_difference(fit_b, "RHC", p1 = 0.4, p0 = 0.2, threshold = 0.02)
+sens_report(rd)
+plot_robustness_curve(rd, points = FALSE)
+```
+
+The dot-dash line is the practical threshold of 2 extra deaths per 100
+patients. The path shows how the conclusion changes across confounding
+scenarios; the band shows sampling error within each scenario. These are
+different sources of uncertainty, and the report keeps them apart. With no
+confounding, the estimate equals `marginaleffects::avg_comparisons()` for
+the treatment. `confounder_effect = "risk_difference"` gives the additive
+version, which equals the correction of `episensr::confounders(type = "RD")`;
+scenarios that would imply risks outside $[0, 1]$ are not used.
+
+## Instrumental variables and double machine learning
+
+`from_iv_sensemakr()` imports the sensitivity analysis of an instrumental
+variable estimate from **iv.sensemakr** (Cinelli and Hazlett, 2025) and
+reproduces its robustness values and benchmark bounds.
+
+```{r iv, eval = has_iv}
+data("card", package = "iv.sensemakr")
+xm <- model.matrix(~ exper + expersq + black + south + smsa + reg661 + reg662 +
+                     reg663 + reg664 + reg665 + reg666 + reg667 + reg668 + smsa66,
+                   data = card)
+iv <- iv.sensemakr::iv_fit(card$lwage, card$educ, card$nearc4, xm)
+p_iv <- from_iv_sensemakr(iv.sensemakr::sensemakr(iv, benchmark_covariates = c("black", "smsa")))
+robustness_points(p_iv)
+```
+
+`sens_dml()` computes the omitted-variable-bias bounds of Chernozhukov et al.
+(2024) for a fit from the R package **DoubleML**, which does not provide
+them, following the Python package **doubleml**.
+
+```{r dml, eval = has_dml}
+library(DoubleML)
+set.seed(1)
+dat <- make_plr_CCDDHNR2018(n_obs = 500, return_type = "data.table")
+plr <- DoubleMLPLR$new(DoubleMLData$new(dat, y_col = "y", d_cols = "d"),
+                       ml_l = mlr3::lrn("regr.lm"), ml_m = mlr3::lrn("regr.lm"))
+plr$fit(store_predictions = TRUE)
+p_dml <- sens_dml(plr)
+robustness_points(p_dml)
+```
+
 ## Two-parameter surfaces
 
 Each framework describes an omitted confounder with two parameters, one for
@@ -283,3 +355,19 @@ Rosenbaum, P. R. (2002). *Observational Studies* (2nd ed.). Springer.
 VanderWeele, T. J., & Ding, P. (2017). Sensitivity analysis in observational
 research: Introducing the E-value. *Annals of Internal Medicine*, 167(4),
 268–274.
+
+Chernozhukov, V., Cinelli, C., Newey, W., Sharma, A., & Syrgkanis, V. (2024).
+Long story short: Omitted variable bias in causal machine learning. NBER
+Working Paper 30302.
+
+Cinelli, C., & Hazlett, C. (2025). An omitted variable bias framework for
+sensitivity analysis of instrumental variables. *Biometrika*, 112(2),
+asaf004.
+
+Connors, A. F., Speroff, T., Dawson, N. V., et al. (1996). The effectiveness
+of right heart catheterization in the initial care of critically ill
+patients. *JAMA*, 276(11), 889–897.
+
+Lin, D. Y., Psaty, B. M., & Kronmal, R. A. (1998). Assessing the sensitivity
+of regression results to unmeasured confounders in observational studies.
+*Biometrics*, 54(3), 948–963.

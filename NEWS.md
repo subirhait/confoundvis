@@ -18,7 +18,17 @@ This release includes the changes prepared as 0.3.1, which was not released.
   risk-difference version equals the correction used by
   `episensr::confounders(type = "RD")`. `confoundvis(glm, risk = list(...))`
   adds it to the RIR. This answers the request for logistic-model support
-  in the review of the 0.3.0 article.
+  in the review of the 0.3.0 article. Scenarios that imply risks outside
+  [0, 1] are not used, offsets are kept, the threshold may lie on either
+  side of zero, and the report and plot use the level given in `alpha`.
+* `plot_robustness_curve()` draws bands at the level stored in the path
+  (for example 99% for a path built with `alpha = 0.01`), not always 95%.
+* The vignette has new sections on risk differences, instrumental
+  variables, and DoubleML.
+* Documentation: the `survival` column of `ATbounds::RHC` is described
+  there as 30-day survival, but it matches the death indicator over the
+  whole follow-up (about 180 days) of the Vanderbilt release; examples now
+  call the outcome death during follow-up.
 
 * `from_iv_sensemakr()` imports the sensitivity analysis of instrumental
   variable estimates from 'iv.sensemakr' (Cinelli and Hazlett, 2025). The

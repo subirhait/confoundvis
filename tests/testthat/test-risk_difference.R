@@ -97,3 +97,42 @@ test_that("surface, report, table, plot, and confoundvis()", {
   expect_named(res$paths, c("rir", "risk_difference"))
   expect_output(print(res), "Risk difference")
 })
+
+test_that("infeasible additive scenarios are rejected", {
+  f <- toy_fit()
+  r <- sens_risk_difference(f, "a", p1 = 0.4, p0 = 0.2,
+                            confounder_effect = "risk_difference")
+  expect_equal(r$meta$max_feasible, 0.4, tolerance = 1e-8)   # 0.16 / 0.4
+  expect_lte(max(r$lambda), r$meta$max_feasible)
+  expect_warning(r2 <- sens_risk_difference(f, "a", p1 = 0.4, p0 = 0.2,
+                                            confounder_effect = "risk_difference",
+                                            lambda = c(0, 0.3, 0.5)),
+                 "outside")
+  expect_true(is.na(r2$theta[3]))
+  expect_false(anyNA(r2$theta[1:2]))
+})
+
+test_that("thresholds beyond zero, offsets, and the confidence level are honoured", {
+  f <- toy_fit()
+  r <- sens_risk_difference(f, "a", p1 = 0.4, p0 = 0.2, threshold = -0.02)
+  expect_gt(r$meta$lambda_threshold, r$meta$lambda_zero)
+  expect_equal(sens_risk_difference(f, "a", 0.4, 0.2, threshold = -0.02,
+                                    lambda = c(1, r$meta$lambda_threshold))$theta[2],
+               -0.02, tolerance = 1e-6)
+  set.seed(1); n <- 2000
+  d <- data.frame(x = rnorm(n), a = rbinom(n, 1, 0.5), o = rnorm(n))
+  d$y <- rbinom(n, 1, plogis(-1 + 0.8 * d$a + d$o + 0.3 * d$x))
+  fo <- glm(y ~ a + x + offset(o), family = binomial, data = d)
+  ro <- sens_risk_difference(fo, "a", 0.4, 0.2)
+  direct <- mean(predict(fo, transform(d, a = 1), type = "response") -
+                 predict(fo, transform(d, a = 0), type = "response"))
+  expect_equal(ro$theta[1], direct, tolerance = 1e-10)
+  r1 <- sens_risk_difference(f, "a", 0.4, 0.2, threshold = 0.02, alpha = 0.01)
+  g <- plot_robustness_curve(r1, points = FALSE)
+  k <- which(vapply(g$layers, function(l) inherits(l$geom, "GeomRibbon"), logical(1)))
+  b <- ggplot2::layer_data(g, k)
+  expect_equal(b$ymax[1] - r1$theta[1], stats::qnorm(0.995) * r1$se[1],
+               tolerance = 1e-8)
+  expect_match(paste(sens_report(r1)$text, collapse = " "), "alpha = 0.01")
+  expect_false(any(grepl("alpha = 0.05", sens_report(r1)$text)))
+})

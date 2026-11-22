@@ -236,10 +236,25 @@ sens_report <- function(x, alpha = NULL, digits = 3) {
         "Hypothetical binary confounder: prevalence %s among the treated and ",
         "%s among the untreated. Under this scenario, a confounder-outcome %s ",
         "of %s brings the risk difference to the practical threshold %s, and ",
-        "%s brings it to zero. With sampling error, the confidence limit ",
-        "reaches the threshold at %s."),
+        "%s brings it to zero. %s"),
         pp(meta$p1), pp(meta$p0), eff, st(meta$lambda_threshold),
-        fmt(meta$rd_threshold), st(meta$lambda_zero), st(meta$lambda_threshold_ci)),
+        fmt(meta$rd_threshold), st(meta$lambda_zero), {
+          lc <- .rd_ci_cross_meta(meta, alpha)
+          lo <- if (meta$confounder_effect == "odds_ratio") 1 else 0
+          if (is.na(lc)) sprintf(paste0(
+            "Allowing for sampling error (alpha = %s), the confidence limit ",
+            "nearest zero does not reach the threshold."), alpha)
+          else if (lc <= lo) sprintf(paste0(
+            "Allowing for sampling error (alpha = %s), the confidence interval ",
+            "already includes the threshold without confounding."), alpha)
+          else sprintf(paste0(
+            "Allowing for sampling error (alpha = %s), the confidence limit ",
+            "nearest zero reaches the threshold at %s."), alpha, fmt(lc))
+        }),
+      if (meta$confounder_effect == "risk_difference" && is.finite(meta$max_feasible))
+        sprintf(paste0("Scenarios with a confounder-outcome risk difference ",
+                       "above %s imply risks outside [0, 1] and are not used."),
+                fmt(meta$max_feasible)),
       paste("The path shows the range across confounding scenarios, not",
             "sampling error; standard errors are given for each scenario."))
   } else if (fw == "rosenbaum" && !is.null(meta$statistic)) {

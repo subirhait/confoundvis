@@ -35,8 +35,24 @@
     dP <- (q * d1 + (1 - q) * d0) / (p * d1 + (1 - p) * d0)
     list(P = P, dP = dP)
   } else {
+    # stratum risks h (U = 0) and h + delta (U = 1) must be probabilities
+    h <- r - s * p
+    if (any(h < -1e-12 | h > 1 + 1e-12 | h + s < -1e-12 | h + s > 1 + 1e-12)) {
+      return(list(P = rep(NA_real_, length(r)), dP = rep(NA_real_, length(r))))
+    }
     list(P = r + s * (q - p), dP = rep(1, length(r)))
   }
+}
+
+# Largest additive confounder effect (in the direction of the path) for
+# which every stratum risk lies in [0, 1].
+.rd_max_delta <- function(ob, dir) {
+  lim <- function(r, p) {
+    # need r - s p in [0, 1] and r + s (1 - p) in [0, 1], s = dir * delta
+    if (dir > 0) min(c(r / p, (1 - r) / (1 - p))[c(p > 0, p < 1)])
+    else min(c((1 - r) / p, r / (1 - p))[c(p > 0, p < 1)])
+  }
+  min(lim(ob$r1, ob$p1), lim(ob$r0, ob$p0))
 }
 
 # Standardized risks, risk difference, and delta-method SE at strengths s
@@ -67,6 +83,28 @@
   }
   out[, 3] <- out[, 1] - out[, 2]
   as.data.frame(out)
+}
+
+# Strength at which the confidence limit nearest zero reaches `thr`.
+.rd_ci_cross <- function(ob, to_s, lo, hi, s0, thr, alpha) {
+  z <- stats::qnorm(1 - alpha / 2)
+  g <- function(l) { e <- .rd_eval(ob, to_s(l)); s0 * (e$rd - thr) - z * e$se }
+  g0 <- g(lo)
+  if (!is.finite(g0)) return(NA_real_)
+  if (g0 <= 0) return(lo)
+  gh <- g(hi)
+  if (!is.finite(gh) || gh > 0) return(NA_real_)
+  stats::uniroot(g, c(lo, hi), tol = 1e-10)$root
+}
+
+# Threshold crossing of the confidence limit at level alpha, from a path.
+.rd_ci_cross_meta <- function(m, alpha) {
+  type <- m$confounder_effect; dir <- m$direction
+  to_s <- function(l) if (type == "odds_ratio") l^dir else dir * l
+  lo <- if (type == "odds_ratio") 1 else 0
+  hi <- if (type == "odds_ratio") 1e4 else min(1 - 1e-9, m$max_feasible)
+  .rd_ci_cross(m$rd_setup, to_s, lo, hi, if (m$estimate >= 0) 1 else -1,
+               m$rd_threshold, alpha)
 }
 
 # Build everything that does not depend on the confounder strength.
@@ -135,7 +173,9 @@
   ok <- !is.na(b)
   X1 <- X1[, ok, drop = FALSE]; X0 <- X0[, ok, drop = FALSE]; b <- b[ok]
   fam <- stats::family(model)
-  eta1 <- drop(X1 %*% b); eta0 <- drop(X0 %*% b)
+  # linear predictors from predict(), so that offsets are kept
+  eta1 <- unname(stats::predict(model, newdata = d1, type = "link"))
+  eta0 <- unname(stats::predict(model, newdata = d0, type = "link"))
   clamp <- function(r) pmin(pmax(r, 1e-12), 1 - 1e-12)
   r1 <- clamp(fam$linkinv(eta1)); r0 <- clamp(fam$linkinv(eta0))
   V <- stats::vcov(model)[ok, ok, drop = FALSE]
@@ -234,6 +274,13 @@
 #'   default a logistic regression of the treatment on the other terms of
 #'   the model.
 #'
+#' For the risk-difference model, a scenario is used only if every implied
+#' stratum risk lies in \eqn{[0, 1]}; the largest such strength is
+#' `meta$max_feasible`, the default grid stops there, and infeasible
+#' scenarios in a user grid are `NA`. Offsets in the model are kept.
+#' `threshold` may lie on either side of zero; the crossing is the strength
+#' at which the adjusted risk difference reaches it.
+#'
 #' @return A `confoundsens` object with `meta$framework = "risk_difference"`.
 #'   `theta` is the adjusted risk difference and `se` its standard error;
 #'   `meta$risks` holds the adjusted risks in both groups; `meta$lambda_zero`
@@ -287,9 +334,9 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
   to_s <- function(l) if (type == "odds_ratio") l^dir else dir * l
   f <- function(l, what = "rd") .rd_eval(ob, to_s(l), se = what == "se")[[what]]
   lo <- if (type == "odds_ratio") 1 else 0
-  hi <- if (type == "odds_ratio") 1e4 else 1 - 1e-9
+  max_feasible <- if (type == "odds_ratio") Inf else .rd_max_delta(ob, dir)
+  hi <- if (type == "odds_ratio") 1e4 else min(1 - 1e-9, max_feasible)
   s0 <- if (rd0 >= 0) 1 else -1
-  z <- stats::qnorm(1 - alpha / 2)
   cross <- function(g) {
     g0 <- g(lo)
     if (!is.finite(g0)) return(NA_real_)
@@ -299,18 +346,14 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
     stats::uniroot(g, c(lo, hi), tol = 1e-10)$root
   }
   l_zero <- cross(function(l) s0 * f(l))
-  l_thr <- if (s0 * threshold > 0 && abs(threshold) < abs(rd0))
-    cross(function(l) s0 * (f(l) - threshold)) else
-    if (s0 * threshold <= 0) l_zero else lo
-  ci_near <- function(l) { e <- .rd_eval(ob, to_s(l)); s0 * e$rd - z * e$se }
-  l_thr_ci <- cross(function(l) ci_near(l) - s0 * threshold)
-
+  l_thr <- cross(function(l) s0 * (f(l) - threshold))
+  l_thr_ci <- .rd_ci_cross(ob, to_s, lo, hi, s0, threshold, alpha)
   if (is.null(lambda)) {
     ref <- if (is.finite(l_zero)) l_zero else NA_real_
     top <- if (type == "odds_ratio") {
       if (is.na(ref)) 20 else min(50, max(3, 1 + 1.5 * (ref - 1)))
     } else {
-      if (is.na(ref)) 0.5 else min(0.99, max(0.05, 1.5 * ref))
+      min(max_feasible, if (is.na(ref)) 0.5 else max(0.05, 1.5 * ref))
     }
     lambda <- seq(lo, top, length.out = 401L)
   } else {
@@ -322,6 +365,12 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
     lambda <- sort(unique(lambda))
   }
   ev <- .rd_eval(ob, to_s(lambda))
+  if (type == "risk_difference" && any(lambda > max_feasible)) {
+    warning(sprintf(paste0(
+      "Confounder-outcome risk differences above %s imply risks outside ",
+      "[0, 1] in some confounder stratum; those scenarios are set to NA."),
+      signif(max_feasible, 4)), call. = FALSE)
+  }
   eff_lab <- if (type == "odds_ratio")
     "Odds ratio of U with the outcome (toward the null)" else
     "Risk difference of U with the outcome (toward the null)"
@@ -343,6 +392,7 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
       direction          = dir,
       target             = target,
       default_alpha      = alpha,
+      max_feasible       = max_feasible,
       lambda_zero        = l_zero,
       lambda_threshold   = l_thr,
       lambda_threshold_ci = l_thr_ci,
@@ -366,7 +416,7 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
   lo <- if (type == "odds_ratio") 1 else 0
   top <- if (type == "odds_ratio") {
     if (is.na(m$lambda_zero)) 20 else min(50, max(3, 1 + 2 * (m$lambda_zero - 1)))
-  } else if (is.na(m$lambda_zero)) 0.5 else min(0.99, 2 * m$lambda_zero)
+  } else min(0.99, if (is.na(m$lambda_zero)) 0.5 else 2 * m$lambda_zero)
   n <- min(n, 61L)   # each point is a g-computation with its gradient
   if (is.null(a)) a <- seq(0, 1, length.out = n) else a <- .check_grid(a, 0, 1, "a")
   if (is.null(b)) b <- seq(lo, top, length.out = n) else
@@ -378,9 +428,10 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
   past0 <- s0 * v$rd <= 0
   below <- s0 * (v$rd - thr) <= 0
   nsig <- s0 * v$rd - z * v$se <= 0
-  gr$zone <- ifelse(past0, "Estimate at or past zero",
+  gr$zone <- ifelse(is.na(v$rd), "Infeasible",
+             ifelse(past0, "Estimate at or past zero",
              ifelse(below, "Below practical threshold",
-             ifelse(nsig, "Not significant", NA_character_)))
+             ifelse(nsig, "Not significant", NA_character_))))
   # Boundaries from contour lines of the grid values (each grid value is a
   # full g-computation, so no further root finding is done).
   cl_bnd <- function(v, kind, tag, style) {

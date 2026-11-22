@@ -2,14 +2,17 @@
 #'
 #' Plots the sensitivity path stored in a `confoundsens` object as a function
 #' of `lambda`. By default, plots the effect path `theta(lambda)`; optionally
-#' plots the test-statistic path `t(lambda)`. Pointwise 95% confidence bands
+#' plots the test-statistic path `t(lambda)`. Pointwise confidence bands
 #' are drawn when standard errors are available.
 #'
 #' @param x A `confoundsens` object created by [new_confoundsens()] or
 #'   [as_confoundsens()].
 #' @param what Character; which path to plot: `"theta"` (default) or `"t"`.
-#' @param bands Logical; if `TRUE` and `x$se` is present, draw 95% pointwise
-#'   confidence bands (applies only when `what = "theta"`). Paths from
+#' @param bands Logical; if `TRUE` and `x$se` is present, draw pointwise
+#'   confidence bands (applies only when `what = "theta"`), at the level the
+#'   path was built with when it stores one (for example
+#'   `sens_risk_difference(..., alpha = 0.01)` gives 99% bands) and 95%
+#'   otherwise. Paths from
 #'   [from_iv_sensemakr()] and [sens_dml()] carry their own confidence limits
 #'   (bias-adjusted Anderson--Rubin limits; `doubleml` limits of the lower
 #'   and upper bounds), which are drawn instead, and the vertical range is
@@ -67,8 +70,11 @@ plot_robustness_curve <- function(x,
   )
 
   # Compute bands before plotting so lo/hi exist in the same df
-  df$lo <- df$y - 1.96 * df$se
-  df$hi <- df$y + 1.96 * df$se
+  # Band level: the path's default level when it stores one, else 95%.
+  band_alpha <- if (!is.null(x$meta$default_alpha)) x$meta$default_alpha else 0.05
+  zb <- stats::qnorm(1 - band_alpha / 2)
+  df$lo <- df$y - zb * df$se
+  df$hi <- df$y + zb * df$se
 
   meta <- x$meta
   # Paths that carry their own confidence limits (instrumental variables,
