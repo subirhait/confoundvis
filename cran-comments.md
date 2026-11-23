@@ -22,8 +22,13 @@ conditional on their being installed.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
+
+* The NOTE lists possibly misspelled words in DESCRIPTION: Chernozhukov,
+  Psaty, and Kronmal are author names in the references, and confounder is
+  a correct technical term.
 
 ## Reverse dependencies
 
 There are no reverse dependencies.
+
