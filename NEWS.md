@@ -1,3 +1,11 @@
+# confoundvis (development version)
+
+* `sens_risk_difference(confounder_effect = "risk_difference")` no longer
+  reports separate arm risks in `meta$risks`. With a confounder effect that
+  may vary with the covariates, only the risk difference is determined by
+  its average; the arm risks depend on how the effect varies. The risk
+  difference, its standard error, and all crossings are unchanged.
+
 # confoundvis 0.4.0
 
 This release includes the changes prepared as 0.3.1, which was not released.

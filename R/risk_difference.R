@@ -299,7 +299,8 @@
 #'
 #' @return A `confoundsens` object with `meta$framework = "risk_difference"`.
 #'   `theta` is the adjusted risk difference and `se` its standard error;
-#'   `meta$risks` holds the adjusted risks in both groups; `meta$lambda_zero`
+#'   `meta$risks` holds the adjusted risks in both groups (odds-ratio model
+#'   only); `meta$lambda_zero`
 #'   and `meta$lambda_threshold` are the strengths at which the estimate
 #'   reaches 0 and `threshold`, and `meta$lambda_threshold_ci` the strength
 #'   at which the confidence limit nearest zero reaches `threshold`. `NA`
@@ -412,8 +413,12 @@ sens_risk_difference <- function(model, treatment, p1, p0, threshold = 0,
       lambda_zero        = l_zero,
       lambda_threshold   = l_thr,
       lambda_threshold_ci = l_thr_ci,
-      risks              = data.frame(lambda = lambda, risk1 = ev$risk1,
-                                      risk0 = ev$risk0),
+      # For the additive model only the contrast is determined by the average
+      # delta; the separate arm risks depend on how delta varies with the
+      # covariates, so they are not reported.
+      risks              = data.frame(lambda = lambda,
+                                      risk1 = if (type == "odds_ratio") ev$risk1 else NA_real_,
+                                      risk0 = if (type == "odds_ratio") ev$risk0 else NA_real_),
       rd_setup           = ob,
       n                  = ob$n,
       lambda_label       = eff_lab,

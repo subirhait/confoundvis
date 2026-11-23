@@ -205,3 +205,13 @@ test_that("surface draws a threshold on the far side of zero", {
   expect_true(any(grepl("^Practical threshold", s$boundary$kind)))
   expect_true(any(s$grid$zone == "Past practical threshold", na.rm = TRUE))
 })
+
+test_that("additive model reports the contrast but not arm risks", {
+  r <- sens_risk_difference(toy_fit(), "a", 0.4, 0.2,
+                            confounder_effect = "risk_difference")
+  expect_true(all(is.na(r$meta$risks$risk1)))
+  expect_true(all(is.na(r$meta$risks$risk0)))
+  expect_false(anyNA(r$theta))
+  ro <- sens_risk_difference(toy_fit(), "a", 0.4, 0.2)
+  expect_equal(ro$meta$risks$risk1 - ro$meta$risks$risk0, ro$theta, tolerance = 1e-12)
+})
