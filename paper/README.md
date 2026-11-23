@@ -6,10 +6,10 @@ These scripts reproduce every number, table, and figure in
 > differences and established robustness measures for unmeasured confounding.
 > Submitted to *BMC Medical Research Methodology*.
 
-They use **confoundvis 0.4.0**. Install that exact version with
+They use **confoundvis 0.4.1**. Install that exact version with
 
 ```r
-remotes::install_github("subirhait/confoundvis@v0.4.0")
+remotes::install_github("subirhait/confoundvis@v0.4.1")
 ```
 
 or from the archived release (see the Zenodo DOI in the article).
@@ -41,7 +41,7 @@ Run them from this folder, in order. Each writes to `output/`.
 
 ## Software used for the article
 
-R 4.6.0 on Windows 11; confoundvis 0.4.0, ATbounds 0.1.1, sensemakr 0.1.6,
+R 4.6.0 on Windows 11; confoundvis 0.4.1, ATbounds 0.1.1, sensemakr 0.1.6,
 konfound 1.0.3, EValue 4.1.4, DOS2 0.5.2, iv.sensemakr 0.1.0, DoubleML 1.0.2,
 mlr3 1.8.0, mlr3learners 0.16.0, ranger 0.18.0, marginaleffects 1.0.0,
 sandwich 3.1-3, ggplot2 4.0.4; Python doubleml 0.11.4. The full session

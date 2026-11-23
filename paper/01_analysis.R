@@ -1,5 +1,5 @@
 # =============================================================================
-# confoundvis 0.4.0 -- analyses for the manuscript (BMC Medical Research Methodology)
+# confoundvis 0.4.1 -- analyses for the manuscript (BMC Medical Research Methodology)
 #
 # Produces every number, table, and figure for the revised article:
 #   1. Main case study: right heart catheterization (RHC) and 30-day death
@@ -32,9 +32,9 @@ need <- c("confoundvis", "ATbounds", "sensemakr", "konfound", "EValue", "sandwic
 miss <- need[!vapply(need, requireNamespace, logical(1), quietly = TRUE)]
 if (length(miss)) install.packages(miss)
 suppressPackageStartupMessages(library(confoundvis))
-if (utils::packageVersion("confoundvis") < "0.4.0")
-  stop("This script needs confoundvis 0.4.0: ",
-       "remotes::install_github('subirhait/confoundvis@v0.4.0')")
+if (utils::packageVersion("confoundvis") < "0.4.1")
+  stop("This script needs confoundvis 0.4.1: ",
+       "remotes::install_github('subirhait/confoundvis@v0.4.1')")
 
 log_file <- file.path(out_dir, "analysis_log.txt")
 sink(log_file, split = TRUE)

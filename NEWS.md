@@ -1,4 +1,8 @@
-# confoundvis (development version)
+# confoundvis 0.4.1
+
+Version evaluated in the article submitted to BMC Medical Research
+Methodology; archived at Zenodo together with the replication scripts in
+`paper/`.
 
 * `sens_risk_difference(confounder_effect = "risk_difference")` no longer
   reports separate arm risks in `meta$risks`. With a confounder effect that

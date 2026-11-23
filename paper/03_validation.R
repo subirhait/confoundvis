@@ -1,5 +1,5 @@
 # =============================================================================
-# confoundvis 0.4.0 -- validation checks reported in the manuscript
+# confoundvis 0.4.1 -- validation checks reported in the manuscript
 #
 #   1. Closed-form stratum risks agree with numerical root finding.
 #   2. Worked example: risks 16% vs 12%, confounder in 40% vs 20%.
@@ -14,8 +14,8 @@
 # Each check prints PASS or FAIL; the script stops if any check fails.
 # =============================================================================
 suppressPackageStartupMessages(library(confoundvis))
-if (utils::packageVersion("confoundvis") < "0.4.0")
-  stop("remotes::install_github('subirhait/confoundvis@v0.4.0')")
+if (utils::packageVersion("confoundvis") < "0.4.1")
+  stop("remotes::install_github('subirhait/confoundvis@v0.4.1')")
 out_dir <- file.path(getwd(), "output", "validation")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 ok <- logical(0)

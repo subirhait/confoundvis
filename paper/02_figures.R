@@ -1,5 +1,5 @@
 # =============================================================================
-# confoundvis 0.4.0 -- publication figures for the RHC case study
+# confoundvis 0.4.1 -- publication figures for the RHC case study
 # Figure 1: adjusted risk difference by confounder strength, crossings marked
 # Figure 2: surface over prevalence among RHC patients and odds ratio (fine grid)
 # Output: output/figures/ in this folder (PDF and 300-dpi PNG)
