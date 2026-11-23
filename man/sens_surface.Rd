@@ -9,17 +9,19 @@ sens_surface(x, a = NULL, b = NULL, n = 201, alpha = 0.05)
 \arguments{
 \item{x}{A `confoundsens` object produced by [sens_path_lm()],
 [from_sensemakr()], [itcv_lm()] (its `$path`), [from_konfound()] with
-`index = "IT"`, [from_evalue()], or [sens_path_pairs()].}
+`index = "IT"`, [from_evalue()], [sens_path_pairs()],
+[from_iv_sensemakr()], [sens_dml()], or [sens_risk_difference()].}
 
 \item{a, b}{Optional numeric grids for the two axes. Defaults depend on
 the framework and extend beyond the relevant boundary.}
 
 \item{n}{Number of grid points per axis when `a` or `b` is not supplied.}
 
-\item{alpha}{Significance level for the partial-\eqn{R^2} boundary.
-ITCV and Rosenbaum paths use the level stored in the path (a warning is
-given if `alpha` is supplied); for E-values the boundary is defined by
-the stored confidence limit.}
+\item{alpha}{Significance level for the partial-\eqn{R^2} and DoubleML
+boundaries (for DoubleML, the default is the level stored by
+[sens_dml()]). ITCV, Rosenbaum, and instrumental-variable paths use the
+level stored in the path (a warning is given if `alpha` is supplied);
+for E-values the boundary is defined by the stored confidence limit.}
 }
 \value{
 An object of class `confoundsurf`: a list with `grid` (a data
@@ -41,6 +43,9 @@ outcome, each in the units of the framework:
 | `itcv` | \eqn{r_{DU \mid X}} | \eqn{r_{YU \mid X}} | adjusted partial correlation |
 | `evalue` | \eqn{RR_{UD}} | \eqn{RR_{UY}} | bound on the risk ratio |
 | `rosenbaum` | \eqn{\Lambda} | \eqn{\Delta} | implied \eqn{\Gamma} |
+| `iv` | \eqn{R^2_{Z \sim W \mid X}} | \eqn{R^2_{Y_0 \sim W \mid Z, X}} | adjusted Anderson--Rubin limit nearest the null |
+| `dml` | `cf_d` | `cf_y` | bias-adjusted bound nearest the null |
+| `risk_difference` | prevalence of \eqn{U} among the treated (`p0` fixed) | confounder-outcome odds ratio or risk difference | adjusted risk difference |
 
 Each surface carries boundaries computed from the published formula of the
 framework, in closed form where one exists and otherwise by root finding
@@ -66,7 +71,16 @@ already uses: the partial-\eqn{R^2} surface is the plane of
 equivalent confounders shown by `EValue::bias_plot()`, and the Rosenbaum
 surface gives the pairs returned by `sensitivitymv::amplify()`. The ITCV
 surface plots the adjusted partial correlation of Frank (2000) over both
-correlations. The surface only evaluates these published formulas. It
+correlations. The instrumental-variable surface is the plane of
+`iv.sensemakr::ovb_contour_plot()` (Cinelli and Hazlett, 2025), with the
+benchmark bounds of the `iv.sensemakr` object; its boundaries are where
+the adjusted Anderson--Rubin limit nearest the null (solid) and the bound
+on the estimate (dashed) reach the null. The DoubleML surface is the
+plane of `doubleml`'s `sensitivity_plot()` (Chernozhukov et al., 2024).
+The risk-difference surface varies the prevalence of the confounder among
+the treated with its prevalence among the untreated held at `p0` (Lin et
+al., 1998); it adds the practical threshold as a boundary and uses at most
+61 grid points per axis, because each point is a g-computation. The surface only evaluates these published formulas. It
 reports no area or share of the plane: the size of a shaded zone depends
 on the chosen axis ranges and has no inferential meaning.
 }

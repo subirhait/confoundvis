@@ -4,26 +4,41 @@
 \alias{confoundvis}
 \title{Sensitivity analysis for unmeasured confounding in one call}
 \usage{
-confoundvis(x, treatment = NULL, alpha = 0.05, labels = NULL, extra = NULL)
+confoundvis(
+  x,
+  treatment = NULL,
+  alpha = 0.05,
+  labels = NULL,
+  extra = NULL,
+  risk = NULL
+)
 }
 \arguments{
-\item{x}{A fitted `lm` or `glm` object, or a numeric vector of matched-pair
-differences.}
+\item{x}{A fitted `lm` or `glm` object, a numeric vector of matched-pair
+differences, an `iv.sensemakr` `iv_fit` or `sensemakr` result, or a
+fitted `DoubleMLPLR` or `DoubleMLIRM` object.}
 
 \item{treatment}{Name of the treatment coefficient (for a model).}
 
 \item{alpha}{Significance level (two-sided for models, one-sided for
-matched pairs).}
+matched pairs). For an `iv.sensemakr` `sensemakr()` result, the level of
+that object is used unless `alpha` is given, in which case the analysis
+is rerun at `alpha`.}
 
 \item{labels}{Optional named character vector of readable covariate
 labels, passed to [covariate_impacts()].}
 
 \item{extra}{Optional named list of further `confoundsens` paths (for
 example from [from_evalue()]) to add for a linear model.}
+
+\item{risk}{For a binomial `glm`: an optional list with the confounder
+scenario for [sens_risk_difference()], with elements `p1`, `p0`, and
+optionally `threshold` and any other argument of that function. The
+risk-difference analysis is then added to the RIR.}
 }
 \value{
 An object of class `confoundvis_result`: a list with `type`
-  (`"lm"`, `"glm"`, or `"pairs"`), `treatment`, `paths` (named list of
+  (`"lm"`, `"glm"`, `"pairs"`, `"iv"`, or `"dml"`), `treatment`, `paths` (named list of
   `confoundsens` objects), `table` ([sens_table()] output), `benchmarks`
   (for `"lm"`: the [covariate_impacts()] results for the two metrics),
   `profile` (for `"lm"`), and `summary` (the plain-language lines).
@@ -45,10 +60,20 @@ What is run depends on the input:
   \item A logistic regression or other [stats::glm()] fit: the RIR
     computed by 'konfound' (which must be installed) and imported with
     [from_konfound()]. konfound's RIR for such models is an
-    approximation; see its documentation.
+    approximation; see its documentation. For a binomial model with a
+    binary treatment, give `risk` to add the risk-difference analysis of
+    [sens_risk_difference()].
   \item A numeric vector: treated as treated-minus-control differences in
     matched pairs, analysed with Rosenbaum's sensitivity model
     ([sens_path_pairs()]; one-sided test).
+  \item An instrumental-variable analysis from `iv.sensemakr`
+    (an `iv_fit()` or `sensemakr()` result): the sensitivity of the
+    Anderson--Rubin inference ([from_iv_sensemakr()]).
+  \item A `DoubleMLPLR` or `DoubleMLIRM` fit from `DoubleML`, fitted with
+    `store_predictions = TRUE`: the omitted-variable-bias analysis of
+    Chernozhukov et al. ([sens_dml()]), with `rho = 1` and the one-sided
+    level `1 - alpha / 2`, so that its significance crossing matches a
+    two-sided test at `alpha`.
 }
 
 Each analysis keeps its own sensitivity parameter and decision rule. The

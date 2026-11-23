@@ -12,8 +12,11 @@ Paths with a stored threshold (ITCV, RIR, and Rosenbaum paths) fix the
 significance level when they are built, because the threshold is computed
 from it. For these paths `alpha` defaults to the stored level. Asking for a
 different level is an error: rebuild the path at the new level instead
-(for example `itcv_lm(model, treatment, alpha = 0.01)`). For other paths the
-default is 0.05. The level actually used is returned in column `alpha`.}
+(for example `itcv_lm(model, treatment, alpha = 0.01)`). Instrumental
+variable paths are fixed at the level of the `iv.sensemakr` object in the
+same way. For other paths the default is the level stored in
+`meta$default_alpha` ([sens_dml()] stores the two-sided level that matches
+the one-sided `doubleml` level), or 0.05. The level actually used is returned in column `alpha`.}
 
 \item{alpha}{Significance level, or `NULL` (default) to use the level
 stored in the path, if any, and 0.05 otherwise. Two-sided, except for
@@ -33,8 +36,9 @@ spacing of `lambda`.
 }
 \details{
 The significance criterion is chosen from what the object carries, in this
-order: a critical value on the `theta` scale in `meta$threshold` (ITCV
-paths); adjusted t statistics with residual degrees of freedom in
+order: bias-adjusted confidence limits in `meta$ci_near` (instrumental
+variable paths from [from_iv_sensemakr()]); a critical value on the
+`theta` scale in `meta$threshold` (ITCV paths); adjusted t statistics with residual degrees of freedom in
 `meta$dof` (partial \eqn{R^2} paths; critical value from a t distribution
 with `dof - 1` degrees of freedom, as in Cinelli and Hazlett, 2020);
 standard errors (normal critical value); or t statistics without degrees

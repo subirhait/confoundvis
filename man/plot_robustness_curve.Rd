@@ -19,8 +19,15 @@ plot_robustness_curve(
 
 \item{what}{Character; which path to plot: `"theta"` (default) or `"t"`.}
 
-\item{bands}{Logical; if `TRUE` and `x$se` is present, draw 95% pointwise
-confidence bands (applies only when `what = "theta"`).}
+\item{bands}{Logical; if `TRUE` and `x$se` is present, draw pointwise
+confidence bands (applies only when `what = "theta"`), at the level the
+path was built with when it stores one (for example
+`sens_risk_difference(..., alpha = 0.01)` gives 99% bands) and 95%
+otherwise. Paths from
+[from_iv_sensemakr()] and [sens_dml()] carry their own confidence limits
+(bias-adjusted Anderson--Rubin limits; `doubleml` limits of the lower
+and upper bounds), which are drawn instead, and the vertical range is
+set from the unadjusted interval because these limits can be infinite.}
 
 \item{points}{Logical; if `TRUE`, overlay points on the line.}
 
@@ -38,7 +45,7 @@ A [ggplot2::ggplot()] object.
 \description{
 Plots the sensitivity path stored in a `confoundsens` object as a function
 of `lambda`. By default, plots the effect path `theta(lambda)`; optionally
-plots the test-statistic path `t(lambda)`. Pointwise 95% confidence bands
+plots the test-statistic path `t(lambda)`. Pointwise confidence bands
 are drawn when standard errors are available.
 }
 \examples{
