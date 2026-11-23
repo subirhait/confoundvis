@@ -65,7 +65,8 @@ at which the adjusted risk difference reaches it.}
 \value{
 A `confoundsens` object with `meta$framework = "risk_difference"`.
   `theta` is the adjusted risk difference and `se` its standard error;
-  `meta$risks` holds the adjusted risks in both groups; `meta$lambda_zero`
+  `meta$risks` holds the adjusted risks in both groups (odds-ratio model
+  only); `meta$lambda_zero`
   and `meta$lambda_threshold` are the strengths at which the estimate
   reaches 0 and `threshold`, and `meta$lambda_threshold_ci` the strength
   at which the confidence limit nearest zero reaches `threshold`. `NA`
